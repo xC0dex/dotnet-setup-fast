@@ -25,9 +25,9 @@ export interface InstallResult {
  */
 function getDotNetInstallDirectory(): string {
 	if (!dotnetInstallDir) {
-		// Use RUNNER_TEMP as base directory (cleaned up after job)
-		const runnerTemp = process.env.RUNNER_TEMP || '/tmp';
-		dotnetInstallDir = path.join(runnerTemp, 'dotnet');
+		// Use RUNNER_TOOL_CACHE which persists between steps
+		const toolCache = process.env.RUNNER_TOOL_CACHE || '/opt/hostedtoolcache';
+		dotnetInstallDir = path.join(toolCache, 'dotnet-custom');
 		core.debug(`Shared .NET installation directory: ${dotnetInstallDir}`);
 	}
 	return dotnetInstallDir;
