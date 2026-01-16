@@ -13,9 +13,11 @@ describe('extractArchive', () => {
 		const mockPath = '/extracted/path';
 		vi.mocked(toolCache.extractZip).mockResolvedValue(mockPath);
 
-		const result = await extractArchive('/path/to/file.zip');
+		const result = await extractArchive('/path/to/downloaded-file', 'zip');
 
-		expect(toolCache.extractZip).toHaveBeenCalledWith('/path/to/file.zip');
+		expect(toolCache.extractZip).toHaveBeenCalledWith(
+			'/path/to/downloaded-file',
+		);
 		expect(result).toBe(mockPath);
 	});
 
@@ -23,29 +25,31 @@ describe('extractArchive', () => {
 		const mockPath = '/extracted/path';
 		vi.mocked(toolCache.extractTar).mockResolvedValue(mockPath);
 
-		const result = await extractArchive('/path/to/file.tar.gz');
+		const result = await extractArchive('/path/to/downloaded-file', 'tar.gz');
 
-		expect(toolCache.extractTar).toHaveBeenCalledWith('/path/to/file.tar.gz');
+		expect(toolCache.extractTar).toHaveBeenCalledWith(
+			'/path/to/downloaded-file',
+		);
 		expect(result).toBe(mockPath);
 	});
 
 	it('should throw error for unsupported format', async () => {
-		await expect(extractArchive('/path/to/file.rar')).rejects.toThrow(
-			'Unsupported archive format: /path/to/file.rar',
+		await expect(extractArchive('/path/to/file', 'rar')).rejects.toThrow(
+			'Unsupported archive format: rar',
 		);
 	});
 
-	it('should throw error for files without extension', async () => {
-		await expect(extractArchive('/path/to/file')).rejects.toThrow(
-			'Unsupported archive format: /path/to/file',
+	it('should throw error for empty extension', async () => {
+		await expect(extractArchive('/path/to/file', '')).rejects.toThrow(
+			'Unsupported archive format:',
 		);
 	});
 
-	it('should handle .tar.gz with different path formats', async () => {
+	it('should handle tar.gz regardless of file path format', async () => {
 		const mockPath = '/extracted/path';
 		vi.mocked(toolCache.extractTar).mockResolvedValue(mockPath);
 
-		await extractArchive('C:\\Windows\\temp\\dotnet-sdk-10.0.0.tar.gz');
+		await extractArchive('C:\\Windows\\temp\\uuid-without-extension', 'tar.gz');
 
 		expect(toolCache.extractTar).toHaveBeenCalled();
 	});

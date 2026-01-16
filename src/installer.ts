@@ -77,7 +77,8 @@ export async function installDotNet(
 	// Extract archive
 	core.info('Extracting archive...');
 	core.debug(`Extracting archive from: ${downloadPath}`);
-	const extractedPath = await extractArchive(downloadPath);
+	const ext = platform === 'win' ? 'zip' : 'tar.gz';
+	const extractedPath = await extractArchive(downloadPath, ext);
 	core.debug(`Extracted to: ${extractedPath}`);
 
 	// Cache the installation
