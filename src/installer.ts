@@ -81,9 +81,15 @@ export async function installDotNet(
 	const installDir = getDotNetInstallDirectory();
 
 	// Copy extracted files to shared directory
-	core.debug(`Copying to shared directory: ${installDir}`);
+	core.debug(`Copying from ${extractedPath} to ${installDir}`);
 	await io.mkdirP(installDir);
-	await io.cp(extractedPath, installDir, { recursive: true, force: true });
+
+	// Copy contents of extracted directory (not the directory itself)
+	await io.cp(extractedPath, installDir, {
+		recursive: true,
+		force: true,
+		copySourceDirectory: false,
+	});
 	core.debug(`Copied to: ${installDir}`);
 
 	// Add to PATH FIRST - this must be before other steps use it
