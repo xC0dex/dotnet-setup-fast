@@ -134,21 +134,10 @@ async function downloadWithRetry(
  */
 export async function verifyDotNetInstallation(): Promise<boolean> {
 	try {
-		let output = '';
 		const exitCode = await exec.exec('dotnet', ['--version'], {
 			silent: true,
-			listeners: {
-				stdout: (data: Buffer) => {
-					output += data.toString();
-				},
-			},
 		});
-
-		if (exitCode === 0 && output.trim()) {
-			core.debug(`Verified .NET version: ${output.trim()}`);
-			return true;
-		}
-		return false;
+		return exitCode === 0;
 	} catch (_error) {
 		return false;
 	}
