@@ -1,23 +1,14 @@
 import * as core from '@actions/core';
 import * as exec from '@actions/exec';
 
-export interface DotNetInstallOptions {
-	version: string;
-	runtimeOnly: boolean;
-	architecture: string;
-	quality: string;
-}
-
 /**
  * Install .NET SDK or Runtime
  */
-export async function installDotNet(
-	options: DotNetInstallOptions,
-): Promise<string> {
-	core.info(`Installing .NET ${options.version}...`);
+export async function installDotNet(): Promise<string> {
+	core.info('Installing .NET...');
 
 	// TODO: Implement download logic
-	// 1. Determine download URL based on version, architecture, OS
+	// 1. Determine download URL
 	// 2. Download .NET installer using tool-cache
 	// 3. Extract/Install .NET
 	// 4. Add to PATH
@@ -29,12 +20,7 @@ export async function installDotNet(
 /**
  * Get the download URL for .NET
  */
-export function getDotNetDownloadUrl(
-	version: string,
-	architecture: string,
-	platform: string,
-	runtimeOnly: boolean,
-): string {
+export function getDotNetDownloadUrl(): string {
 	// TODO: Build download URL from .NET download API
 	// Example: https://dotnetcli.azureedge.net/dotnet/Sdk/{version}/dotnet-sdk-{version}-{platform}-{arch}.{ext}
 

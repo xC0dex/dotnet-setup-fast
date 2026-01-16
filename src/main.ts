@@ -5,30 +5,13 @@ import * as core from '@actions/core';
  */
 async function run(): Promise<void> {
 	try {
-		// Get inputs from action.yml
-		const dotnetVersion = core.getInput('dotnet-version', { required: true });
-		const installRuntimeOnly = core.getBooleanInput('install-runtime-only');
-		const cacheEnabled = core.getBooleanInput('cache-enabled');
-		const architecture = core.getInput('architecture') || 'x64';
-		const quality = core.getInput('quality') || 'ga';
-
-		core.info(`Setting up .NET ${dotnetVersion} (${architecture})`);
-		core.info(`Runtime only: ${installRuntimeOnly}`);
-		core.info(`Cache enabled: ${cacheEnabled}`);
-		core.info(`Quality: ${quality}`);
+		core.info('Setting up .NET');
 
 		// TODO: Implement .NET installation logic
-		// const installedVersion = await installDotNet({
-		//   version: dotnetVersion,
-		//   runtimeOnly: installRuntimeOnly,
-		//   architecture,
-		//   quality
-		// });
+		// const installedVersion = await installDotNet();
 
 		// TODO: Implement caching logic
-		// const cacheHit = cacheEnabled
-		//   ? await setupCache(installedVersion, architecture)
-		//   : false;
+		// const cacheHit = await setupCache(installedVersion);
 
 		// Set outputs
 		// core.setOutput('dotnet-version', installedVersion);
