@@ -52,30 +52,56 @@ export async function installDotNet(
 	try {
 		downloadPath = await downloadWithRetry(downloadUrl, 3);
 
-		// Show download size
+		// Validate download
 		const stats = fs.statSync(downloadPath);
+		if (stats.size === 0) {
+			throw new Error('Downloaded file is empty');
+		}
+
 		const sizeInMB = (stats.size / 1024 / 1024).toFixed(2);
 		core.info(`${prefix} Downloaded ${sizeInMB} MB`);
 	} catch (error) {
 		const errorMsg = error instanceof Error ? error.message : String(error);
+		const platform = getPlatform();
+		const arch = getArchitecture();
 		throw new Error(
-			`Failed to download .NET ${type} ${resolvedVersion}: ${errorMsg}`,
+			`Failed to download .NET ${type} ${resolvedVersion} (${platform}-${arch}): ${errorMsg}`,
 		);
 	}
 
 	core.info(`${prefix} Extracting...`);
 	const platform = getPlatform();
 	const ext = platform === 'win' ? 'zip' : 'tar.gz';
-	const extractedPath = await extractArchive(downloadPath, ext);
+	let extractedPath: string;
+	try {
+		extractedPath = await extractArchive(downloadPath, ext);
+	} catch (error) {
+		const errorMsg = error instanceof Error ? error.message : String(error);
+		throw new Error(`Failed to extract archive: ${errorMsg}`);
+	}
+
+	// Validate extracted dotnet binary exists
+	const dotnetBinary = platform === 'win' ? 'dotnet.exe' : 'dotnet';
+	const dotnetPath = path.join(extractedPath, dotnetBinary);
+	if (!fs.existsSync(dotnetPath)) {
+		throw new Error(
+			`Extracted archive is missing ${dotnetBinary}. Archive may be corrupted.`,
+		);
+	}
 
 	const installDir = getDotNetInstallDirectory();
 	core.info(`${prefix} Installing...`);
 	await io.mkdirP(installDir);
-	await io.cp(extractedPath, installDir, {
-		recursive: true,
-		force: true,
-		copySourceDirectory: false,
-	});
+	try {
+		await io.cp(extractedPath, installDir, {
+			recursive: true,
+			force: true,
+			copySourceDirectory: false,
+		});
+	} catch (error) {
+		const errorMsg = error instanceof Error ? error.message : String(error);
+		throw new Error(`Failed to copy files to ${installDir}: ${errorMsg}`);
+	}
 
 	if (!process.env.PATH?.includes(installDir)) {
 		core.addPath(installDir);
