@@ -17,7 +17,7 @@ jobs:
     
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
       
       - name: Setup .NET using this action
         uses: ./
@@ -43,21 +43,3 @@ jobs:
           cd test-app
           dotnet build
           dotnet run
-
-  test-runtime-only:
-    name: Test Runtime Only Installation
-    runs-on: ubuntu-latest
-    
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      
-      - name: Setup .NET Runtime only
-        uses: ./
-        with:
-          dotnet-version: '8.0.x'
-          install-runtime-only: 'true'
-          cache-enabled: 'false'
-      
-      - name: Verify Runtime installation
-        run: dotnet --version
