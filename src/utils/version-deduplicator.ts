@@ -1,4 +1,5 @@
 import * as core from '@actions/core';
+import { getSdkIncludedVersions } from './sdk-runtime-mapper';
 import { resolveVersion } from './version-resolver';
 
 export interface VersionSet {
@@ -40,7 +41,29 @@ export async function deduplicateVersions(
 	const sdkSet = new Set(resolvedSdk.map((v) => v.resolved));
 	const aspnetcoreSet = new Set(resolvedAspnetcore.map((v) => v.resolved));
 
-	// Filter runtime: remove if same version exists in aspnetcore or sdk
+	// Get runtime/aspnetcore versions included in SDKs
+	const sdkIncludedVersions = await Promise.all(
+		resolvedSdk.map(async (sdk) => ({
+			sdk: sdk.resolved,
+			included: await getSdkIncludedVersions(sdk.resolved),
+		})),
+	);
+
+	// Build sets of versions covered by SDKs
+	const sdkIncludedRuntimes = new Set<string>();
+	const sdkIncludedAspnetcore = new Set<string>();
+	for (const { sdk, included } of sdkIncludedVersions) {
+		if (included.runtime) {
+			sdkIncludedRuntimes.add(included.runtime);
+			core.debug(`SDK ${sdk} includes runtime ${included.runtime}`);
+		}
+		if (included.aspnetcore) {
+			sdkIncludedAspnetcore.add(included.aspnetcore);
+			core.debug(`SDK ${sdk} includes aspnetcore ${included.aspnetcore}`);
+		}
+	}
+
+	// Filter runtime: remove if same version exists in aspnetcore/sdk OR is included in an SDK
 	const filteredRuntime = resolvedRuntime.filter((v) => {
 		if (aspnetcoreSet.has(v.resolved) || sdkSet.has(v.resolved)) {
 			core.info(
@@ -48,14 +71,26 @@ export async function deduplicateVersions(
 			);
 			return false;
 		}
+		if (sdkIncludedRuntimes.has(v.resolved)) {
+			core.info(
+				`ℹ️  Skipping redundant runtime ${v.original} (included in SDK)`,
+			);
+			return false;
+		}
 		return true;
 	});
 
-	// Filter aspnetcore: remove if same version exists in sdk
+	// Filter aspnetcore: remove if same version exists in sdk OR is included in an SDK
 	const filteredAspnetcore = resolvedAspnetcore.filter((v) => {
 		if (sdkSet.has(v.resolved)) {
 			core.info(
 				`ℹ️  Skipping redundant aspnetcore ${v.original} (covered by sdk)`,
+			);
+			return false;
+		}
+		if (sdkIncludedAspnetcore.has(v.resolved)) {
+			core.info(
+				`ℹ️  Skipping redundant aspnetcore ${v.original} (included in SDK)`,
 			);
 			return false;
 		}
