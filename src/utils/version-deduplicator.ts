@@ -49,17 +49,12 @@ export async function deduplicateVersions(
 		})),
 	);
 
-	// Build sets of versions covered by SDKs
+	// Build set of runtime versions covered by SDKs
 	const sdkIncludedRuntimes = new Set<string>();
-	const sdkIncludedAspnetcore = new Set<string>();
 	for (const { sdk, included } of sdkIncludedVersions) {
 		if (included.runtime) {
 			sdkIncludedRuntimes.add(included.runtime);
 			core.debug(`SDK ${sdk} includes runtime ${included.runtime}`);
-		}
-		if (included.aspnetcore) {
-			sdkIncludedAspnetcore.add(included.aspnetcore);
-			core.debug(`SDK ${sdk} includes aspnetcore ${included.aspnetcore}`);
 		}
 	}
 
@@ -81,10 +76,10 @@ export async function deduplicateVersions(
 		return true;
 	});
 
-	// Filter aspnetcore: remove if included in SDK or same version in sdk
+	// Filter aspnetcore: remove if included in SDK (check runtime version) or same version in sdk
 	const filteredAspnetcore = resolvedAspnetcore.filter((v) => {
-		// Check SDK-included first (most specific)
-		if (sdkIncludedAspnetcore.has(v.resolved)) {
+		// Check SDK-included runtime first (ASP.NET Core uses same version as runtime)
+		if (sdkIncludedRuntimes.has(v.resolved)) {
 			core.info(
 				`ℹ️  Skipping redundant aspnetcore ${v.original} (included in SDK)`,
 			);
