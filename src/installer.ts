@@ -1,5 +1,4 @@
 import * as core from '@actions/core';
-import * as exec from '@actions/exec';
 import * as toolCache from '@actions/tool-cache';
 import { extractArchive } from './utils/archive-utils';
 import { getArchitecture, getPlatform } from './utils/platform-utils';
@@ -65,14 +64,6 @@ export async function installDotNet(
 	core.addPath(extractedPath);
 	core.info('Added to PATH');
 
-	// Verify installation
-	core.debug('Verifying installation...');
-	const verified = await verifyDotNetInstallation();
-	if (!verified) {
-		throw new Error('Failed to verify .NET installation');
-	}
-	core.info('Installation verified');
-
 	return {
 		version: resolvedVersion,
 		type,
@@ -127,18 +118,4 @@ async function downloadWithRetry(
 	}
 
 	throw lastError || new Error('Download failed for unknown reason');
-}
-
-/**
- * Verify .NET installation
- */
-export async function verifyDotNetInstallation(): Promise<boolean> {
-	try {
-		const exitCode = await exec.exec('dotnet', ['--version'], {
-			silent: true,
-		});
-		return exitCode === 0;
-	} catch (_error) {
-		return false;
-	}
 }
