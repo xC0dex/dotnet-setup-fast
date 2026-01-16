@@ -95,6 +95,15 @@ export async function installDotNet(
 		core.debug('Shared directory already in PATH');
 	}
 
+	// Set DOTNET_ROOT so dotnet finds our installation
+	if (!process.env.DOTNET_ROOT) {
+		core.debug(`Setting DOTNET_ROOT: ${installDir}`);
+		core.exportVariable('DOTNET_ROOT', installDir);
+		core.info('Set DOTNET_ROOT');
+	} else {
+		core.debug('DOTNET_ROOT already set');
+	}
+
 	return {
 		version: resolvedVersion,
 		type,
