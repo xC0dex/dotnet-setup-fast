@@ -24,9 +24,7 @@ jobs:
         uses: ./
         id: setup-dotnet
         with:
-          dotnet-version: ${{ matrix.dotnet-version }}
-          cache-enabled: 'true'
-          architecture: 'x64'
+          dotnet-sdk: 10.x.x
       
       - name: Verify .NET installation
         run: dotnet --version
