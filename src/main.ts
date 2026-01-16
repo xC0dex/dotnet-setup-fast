@@ -1,4 +1,4 @@
-import * as core from "@actions/core";
+import * as core from '@actions/core';
 
 /**
  * Main entry point for the GitHub Action
@@ -6,11 +6,11 @@ import * as core from "@actions/core";
 async function run(): Promise<void> {
 	try {
 		// Get inputs from action.yml
-		const dotnetVersion = core.getInput("dotnet-version", { required: true });
-		const installRuntimeOnly = core.getBooleanInput("install-runtime-only");
-		const cacheEnabled = core.getBooleanInput("cache-enabled");
-		const architecture = core.getInput("architecture") || "x64";
-		const quality = core.getInput("quality") || "ga";
+		const dotnetVersion = core.getInput('dotnet-version', { required: true });
+		const installRuntimeOnly = core.getBooleanInput('install-runtime-only');
+		const cacheEnabled = core.getBooleanInput('cache-enabled');
+		const architecture = core.getInput('architecture') || 'x64';
+		const quality = core.getInput('quality') || 'ga';
 
 		core.info(`Setting up .NET ${dotnetVersion} (${architecture})`);
 		core.info(`Runtime only: ${installRuntimeOnly}`);
@@ -35,12 +35,12 @@ async function run(): Promise<void> {
 		// core.setOutput('cache-hit', cacheHit);
 		// core.setOutput('dotnet-path', dotnetPath);
 
-		core.info("✓ .NET setup completed successfully");
+		core.info('✓ .NET setup completed successfully');
 	} catch (error) {
 		if (error instanceof Error) {
 			core.setFailed(error.message);
 		} else {
-			core.setFailed("An unknown error occurred");
+			core.setFailed('An unknown error occurred');
 		}
 	}
 }

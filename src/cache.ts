@@ -1,4 +1,4 @@
-import * as core from "@actions/core";
+import * as core from '@actions/core';
 
 /**
  * Setup caching for .NET installation
@@ -7,7 +7,7 @@ export async function setupCache(
 	dotnetVersion: string,
 	architecture: string,
 ): Promise<boolean> {
-	core.info("Setting up cache...");
+	core.info('Setting up cache...');
 
 	// TODO: Implement caching logic
 	// 1. Generate cache key based on version, architecture, OS
@@ -15,7 +15,7 @@ export async function setupCache(
 	// 3. If cache miss, installation will happen
 	// 4. After installation, save to cache
 
-	throw new Error("Not implemented yet");
+	throw new Error('Not implemented yet');
 }
 
 /**

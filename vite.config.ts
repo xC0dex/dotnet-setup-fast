@@ -2,10 +2,10 @@ import { defineConfig } from "vite";
 import { resolve } from "path";
 
 export default defineConfig({
-    ssr: {
-    noExternal: true,
-    target: 'node',
-  },
+	ssr: {
+		noExternal: true,
+		target: "node",
+	},
 	build: {
 		ssr: true,
 		outDir: "dist",

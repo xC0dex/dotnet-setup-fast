@@ -1,5 +1,5 @@
-import * as core from "@actions/core";
-import * as exec from "@actions/exec";
+import * as core from '@actions/core';
+import * as exec from '@actions/exec';
 
 export interface DotNetInstallOptions {
 	version: string;
@@ -23,7 +23,7 @@ export async function installDotNet(
 	// 4. Add to PATH
 	// 5. Verify installation
 
-	throw new Error("Not implemented yet");
+	throw new Error('Not implemented yet');
 }
 
 /**
@@ -38,7 +38,7 @@ export function getDotNetDownloadUrl(
 	// TODO: Build download URL from .NET download API
 	// Example: https://dotnetcli.azureedge.net/dotnet/Sdk/{version}/dotnet-sdk-{version}-{platform}-{arch}.{ext}
 
-	throw new Error("Not implemented yet");
+	throw new Error('Not implemented yet');
 }
 
 /**
@@ -49,7 +49,7 @@ export async function verifyDotNetInstallation(
 ): Promise<boolean> {
 	try {
 		// TODO: Run `dotnet --version` to verify
-		const exitCode = await exec.exec("dotnet", ["--version"], {
+		const exitCode = await exec.exec('dotnet', ['--version'], {
 			silent: true,
 		});
 
