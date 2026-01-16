@@ -1,8 +1,13 @@
 import * as core from '@actions/core';
+import * as io from '@actions/io';
 import * as toolCache from '@actions/tool-cache';
+import * as path from 'node:path';
 import { extractArchive } from './utils/archive-utils';
 import { getArchitecture, getPlatform } from './utils/platform-utils';
 import { resolveVersion } from './utils/version-resolver';
+
+// Shared installation directory for all .NET installations
+let dotnetInstallDir: string | null = null;
 
 export interface InstallOptions {
 	version: string;
@@ -13,6 +18,19 @@ export interface InstallResult {
 	version: string;
 	type: 'sdk' | 'runtime';
 	path: string;
+}
+
+/**
+ * Get or create the shared .NET installation directory
+ */
+function getDotNetInstallDirectory(): string {
+	if (!dotnetInstallDir) {
+		// Use RUNNER_TEMP as base directory (cleaned up after job)
+		const runnerTemp = process.env.RUNNER_TEMP || '/tmp';
+		dotnetInstallDir = path.join(runnerTemp, 'dotnet');
+		core.debug(`Shared .NET installation directory: ${dotnetInstallDir}`);
+	}
+	return dotnetInstallDir;
 }
 
 /**
@@ -59,15 +77,28 @@ export async function installDotNet(
 	const extractedPath = await extractArchive(downloadPath, ext);
 	core.debug(`Extracted to: ${extractedPath}`);
 
-	// Add to PATH
-	core.debug(`Adding to PATH: ${extractedPath}`);
-	core.addPath(extractedPath);
-	core.info('Added to PATH');
+	// Get shared installation directory
+	const installDir = getDotNetInstallDirectory();
+
+	// Copy extracted files to shared directory
+	core.debug(`Copying to shared directory: ${installDir}`);
+	await io.mkdirP(installDir);
+	await io.cp(extractedPath, installDir, { recursive: true, force: false });
+	core.debug(`Copied to: ${installDir}`);
+
+	// Add to PATH only once (for the shared directory)
+	if (!process.env.PATH?.includes(installDir)) {
+		core.debug(`Adding to PATH: ${installDir}`);
+		core.addPath(installDir);
+		core.info('Added to PATH');
+	} else {
+		core.debug('Shared directory already in PATH');
+	}
 
 	return {
 		version: resolvedVersion,
 		type,
-		path: extractedPath,
+		path: installDir,
 	};
 }
 

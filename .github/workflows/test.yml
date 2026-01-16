@@ -7,9 +7,6 @@ on:
         - feat/**
   workflow_dispatch:
 
-env:
-  ACTIONS_STEP_DEBUG: 'true'
-
 jobs:
   test-action:
     name: Test .NET Setup
