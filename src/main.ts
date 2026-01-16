@@ -1,5 +1,6 @@
 import * as core from '@actions/core';
 import { installDotNet } from './installer';
+import { parseVersions } from './utils/input-parser';
 
 interface InstallationResult {
 	version: string;
@@ -12,10 +13,13 @@ interface InstallationResult {
  */
 export async function run(): Promise<void> {
 	try {
-		const sdkVersion = core.getInput('dotnet-sdk');
-		const runtimeVersion = core.getInput('dotnet-runtime');
+		const sdkInput = core.getInput('dotnet-sdk');
+		const runtimeInput = core.getInput('dotnet-runtime');
 
-		if (!sdkVersion && !runtimeVersion) {
+		const sdkVersions = parseVersions(sdkInput);
+		const runtimeVersions = parseVersions(runtimeInput);
+
+		if (sdkVersions.length === 0 && runtimeVersions.length === 0) {
 			throw new Error(
 				'At least one of dotnet-sdk or dotnet-runtime must be specified',
 			);
@@ -23,26 +27,30 @@ export async function run(): Promise<void> {
 
 		// Show installation plan
 		const installPlan: string[] = [];
-		if (sdkVersion) installPlan.push(`SDK ${sdkVersion}`);
-		if (runtimeVersion) installPlan.push(`Runtime ${runtimeVersion}`);
-		core.info(`📦 Installing .NET: ${installPlan.join(', ')}`);
+		if (sdkVersions.length > 0) {
+			installPlan.push(`SDK ${sdkVersions.join(', ')}`);
+		}
+		if (runtimeVersions.length > 0) {
+			installPlan.push(`Runtime ${runtimeVersions.join(', ')}`);
+		}
+		core.info(`📦 Installing .NET: ${installPlan.join(' | ')}`);
 
 		// Prepare installation tasks
 		const installTasks: Promise<InstallationResult>[] = [];
 
-		if (sdkVersion) {
+		for (const version of sdkVersions) {
 			installTasks.push(
 				installDotNet({
-					version: sdkVersion,
+					version,
 					type: 'sdk',
 				}),
 			);
 		}
 
-		if (runtimeVersion) {
+		for (const version of runtimeVersions) {
 			installTasks.push(
 				installDotNet({
-					version: runtimeVersion,
+					version,
 					type: 'runtime',
 				}),
 			);

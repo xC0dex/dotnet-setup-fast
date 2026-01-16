@@ -8,11 +8,11 @@ branding:
 
 inputs:
   dotnet-sdk:
-    description: '.NET SDK version to install (e.g., 10.0.0, 10.x, 10.x.x). Can be specified alongside dotnet-runtime.'
+    description: '.NET SDK version(s) to install. Supports single version, comma-separated (10.x.x, 9.0.0), or YAML array. Can be specified alongside dotnet-runtime.'
     required: false
   
   dotnet-runtime:
-    description: '.NET Runtime version to install (e.g., 8.0.0, 8.x, 9.x.x). Can be specified alongside dotnet-sdk.'
+    description: '.NET Runtime version(s) to install. Supports single version, comma-separated (8.0.0, 7.x.x), or YAML array. Can be specified alongside dotnet-sdk.'
     required: false
 
 outputs:

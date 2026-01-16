@@ -24,7 +24,9 @@ jobs:
         uses: ./
         id: setup-dotnet
         with:
-          dotnet-sdk: 10.x.x
+          dotnet-sdk: |
+            10.x.x
+            7.0.100
           dotnet-runtime: 7.0.0
       
       - name: Verify .NET installation
