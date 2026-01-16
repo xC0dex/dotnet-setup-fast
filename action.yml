@@ -1,5 +1,5 @@
 name: 'Setup .NET Fast'
-description: 'Download and automatically cache .NET SDK and Runtime with optimized performance'
+description: 'Download .NET SDK and Runtime with optimized performance'
 author: '@xC0dex'
 
 branding:
@@ -14,18 +14,10 @@ inputs:
   dotnet-runtime:
     description: '.NET Runtime version to install (e.g., 8.0.0, 8.x, 9.x.x). Can be specified alongside dotnet-sdk.'
     required: false
-  
-  enable-cache:
-    description: 'Enable caching of .NET installations to speed up subsequent runs'
-    required: false
-    default: 'true'
 
 outputs:
   dotnet-version:
     description: 'The installed .NET version'
-  
-  cache-hit:
-    description: 'Whether the .NET installation was restored from cache'
   
   dotnet-path:
     description: 'Path to the installed .NET directory'

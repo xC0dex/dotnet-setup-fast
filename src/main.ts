@@ -17,11 +17,9 @@ export async function run(): Promise<void> {
 		// Read inputs
 		const sdkVersion = core.getInput('dotnet-sdk');
 		const runtimeVersion = core.getInput('dotnet-runtime');
-		const enableCache = core.getBooleanInput('enable-cache');
 
 		core.debug(`Input: dotnet-sdk='${sdkVersion}'`);
 		core.debug(`Input: dotnet-runtime='${runtimeVersion}'`);
-		core.debug(`Input: enable-cache='${enableCache}'`);
 
 		// Validate inputs - at least one must be specified
 		if (!sdkVersion && !runtimeVersion) {
@@ -31,7 +29,6 @@ export async function run(): Promise<void> {
 		}
 
 		const installations: InstallationResult[] = [];
-		let overallCacheHit = true;
 
 		// Install SDK if specified
 		if (sdkVersion) {
@@ -40,13 +37,9 @@ export async function run(): Promise<void> {
 			const result = await installDotNet({
 				version: sdkVersion,
 				type: 'sdk',
-				enableCache,
 			});
 			installations.push(result);
 			core.debug(`SDK installation result: ${JSON.stringify(result)}`);
-			if (!result.cacheHit) {
-				overallCacheHit = false;
-			}
 			core.info(`✓ .NET SDK ${result.version} installed at ${result.path}`);
 		}
 
@@ -57,13 +50,9 @@ export async function run(): Promise<void> {
 			const result = await installDotNet({
 				version: runtimeVersion,
 				type: 'runtime',
-				enableCache,
 			});
 			installations.push(result);
 			core.debug(`Runtime installation result: ${JSON.stringify(result)}`);
-			if (!result.cacheHit) {
-				overallCacheHit = false;
-			}
 			core.info(`✓ .NET Runtime ${result.version} installed at ${result.path}`);
 		}
 
@@ -74,11 +63,9 @@ export async function run(): Promise<void> {
 		const paths = installations.map((i) => i.path).join(':');
 
 		core.debug(`Setting output dotnet-version: ${versions}`);
-		core.debug(`Setting output cache-hit: ${overallCacheHit}`);
 		core.debug(`Setting output dotnet-path: ${paths}`);
 
 		core.setOutput('dotnet-version', versions);
-		core.setOutput('cache-hit', overallCacheHit.toString());
 		core.setOutput('dotnet-path', paths);
 
 		core.info('✓ .NET setup completed successfully');

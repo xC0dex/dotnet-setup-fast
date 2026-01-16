@@ -1,7 +1,6 @@
 import * as core from '@actions/core';
 import * as exec from '@actions/exec';
 import * as toolCache from '@actions/tool-cache';
-import { setupCache } from './cache';
 import { extractArchive } from './utils/archive-utils';
 import { getArchitecture, getPlatform } from './utils/platform-utils';
 import { resolveVersion } from './utils/version-resolver';
@@ -9,14 +8,12 @@ import { resolveVersion } from './utils/version-resolver';
 export interface InstallOptions {
 	version: string;
 	type: 'sdk' | 'runtime';
-	enableCache: boolean;
 }
 
 export interface InstallResult {
 	version: string;
 	type: 'sdk' | 'runtime';
 	path: string;
-	cacheHit: boolean;
 }
 
 /**
@@ -25,31 +22,14 @@ export interface InstallResult {
 export async function installDotNet(
 	options: InstallOptions,
 ): Promise<InstallResult> {
-	const { version, type, enableCache } = options;
+	const { version, type } = options;
 
-	core.debug(
-		`installDotNet called with: version='${version}', type='${type}', enableCache=${enableCache}`,
-	);
+	core.debug(`installDotNet called with: version='${version}', type='${type}'`);
 
 	// Resolve wildcard versions to concrete version
 	core.debug(`Resolving version: ${version}`);
 	const resolvedVersion = await resolveVersion(version, type);
 	core.info(`Resolved version: ${resolvedVersion}`);
-
-	// Try to restore from cache
-	if (enableCache) {
-		core.debug('Cache is enabled, checking for cached installation');
-		const cacheResult = await setupCache(resolvedVersion, type);
-		if (cacheResult.hit) {
-			core.info(`✓ Restored from cache: ${cacheResult.path}`);
-			return {
-				version: resolvedVersion,
-				type,
-				path: cacheResult.path,
-				cacheHit: true,
-			};
-		}
-	}
 
 	// Download and install
 	core.info(`Downloading .NET ${type} ${resolvedVersion}...`);
@@ -80,27 +60,9 @@ export async function installDotNet(
 	const extractedPath = await extractArchive(downloadPath, ext);
 	core.debug(`Extracted to: ${extractedPath}`);
 
-	// Cache the installation
-	let finalPath = extractedPath;
-	if (enableCache) {
-		core.info('Caching installation...');
-		core.debug(
-			`Caching directory: ${extractedPath} with key: dotnet-${type}, version: ${resolvedVersion}`,
-		);
-		const cachePath = await toolCache.cacheDir(
-			extractedPath,
-			`dotnet-${type}`,
-			resolvedVersion,
-		);
-		finalPath = cachePath;
-		core.debug(`Cached to: ${cachePath}`);
-	} else {
-		core.debug('Cache disabled, using extracted path directly');
-	}
-
 	// Add to PATH
-	core.debug(`Adding to PATH: ${finalPath}`);
-	core.addPath(finalPath);
+	core.debug(`Adding to PATH: ${extractedPath}`);
+	core.addPath(extractedPath);
 	core.info('Added to PATH');
 
 	// Verify installation
@@ -114,8 +76,7 @@ export async function installDotNet(
 	return {
 		version: resolvedVersion,
 		type,
-		path: finalPath,
-		cacheHit: false,
+		path: extractedPath,
 	};
 }
 

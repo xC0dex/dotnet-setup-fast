@@ -17,12 +17,10 @@ describe('main', () => {
 			if (name === 'dotnet-sdk') return '10.0.0';
 			return '';
 		});
-		vi.mocked(core.getBooleanInput).mockReturnValue(true);
 		vi.mocked(installDotNet).mockResolvedValue({
 			version: '10.0.0',
 			type: 'sdk',
 			path: '/path/to/sdk',
-			cacheHit: false,
 		} as InstallResult);
 
 		await run();
@@ -30,10 +28,8 @@ describe('main', () => {
 		expect(installDotNet).toHaveBeenCalledWith({
 			version: '10.0.0',
 			type: 'sdk',
-			enableCache: true,
 		});
 		expect(core.setOutput).toHaveBeenCalledWith('dotnet-version', 'sdk:10.0.0');
-		expect(core.setOutput).toHaveBeenCalledWith('cache-hit', 'false');
 		expect(core.setOutput).toHaveBeenCalledWith('dotnet-path', '/path/to/sdk');
 	});
 
@@ -42,12 +38,10 @@ describe('main', () => {
 			if (name === 'dotnet-runtime') return '8.0.0';
 			return '';
 		});
-		vi.mocked(core.getBooleanInput).mockReturnValue(true);
 		vi.mocked(installDotNet).mockResolvedValue({
 			version: '8.0.0',
 			type: 'runtime',
 			path: '/path/to/runtime',
-			cacheHit: true,
 		} as InstallResult);
 
 		await run();
@@ -55,13 +49,11 @@ describe('main', () => {
 		expect(installDotNet).toHaveBeenCalledWith({
 			version: '8.0.0',
 			type: 'runtime',
-			enableCache: true,
 		});
 		expect(core.setOutput).toHaveBeenCalledWith(
 			'dotnet-version',
 			'runtime:8.0.0',
 		);
-		expect(core.setOutput).toHaveBeenCalledWith('cache-hit', 'true');
 		expect(core.setOutput).toHaveBeenCalledWith(
 			'dotnet-path',
 			'/path/to/runtime',
@@ -74,19 +66,16 @@ describe('main', () => {
 			if (name === 'dotnet-runtime') return '8.0.0';
 			return '';
 		});
-		vi.mocked(core.getBooleanInput).mockReturnValue(true);
 		vi.mocked(installDotNet)
 			.mockResolvedValueOnce({
 				version: '10.0.0',
 				type: 'sdk',
 				path: '/path/to/sdk',
-				cacheHit: false,
 			} as InstallResult)
 			.mockResolvedValueOnce({
 				version: '8.0.0',
 				type: 'runtime',
 				path: '/path/to/runtime',
-				cacheHit: true,
 			} as InstallResult);
 
 		await run();
@@ -96,64 +85,14 @@ describe('main', () => {
 			'dotnet-version',
 			'sdk:10.0.0, runtime:8.0.0',
 		);
-		expect(core.setOutput).toHaveBeenCalledWith('cache-hit', 'false');
 		expect(core.setOutput).toHaveBeenCalledWith(
 			'dotnet-path',
 			'/path/to/sdk:/path/to/runtime',
 		);
 	});
 
-	it('should set cache-hit to true when all installations from cache', async () => {
-		vi.mocked(core.getInput).mockImplementation((name: string) => {
-			if (name === 'dotnet-sdk') return '10.0.0';
-			if (name === 'dotnet-runtime') return '8.0.0';
-			return '';
-		});
-		vi.mocked(core.getBooleanInput).mockReturnValue(true);
-		vi.mocked(installDotNet)
-			.mockResolvedValueOnce({
-				version: '10.0.0',
-				type: 'sdk',
-				path: '/path/to/sdk',
-				cacheHit: true,
-			} as InstallResult)
-			.mockResolvedValueOnce({
-				version: '8.0.0',
-				type: 'runtime',
-				path: '/path/to/runtime',
-				cacheHit: true,
-			} as InstallResult);
-
-		await run();
-
-		expect(core.setOutput).toHaveBeenCalledWith('cache-hit', 'true');
-	});
-
-	it('should respect enable-cache false setting', async () => {
-		vi.mocked(core.getInput).mockImplementation((name: string) => {
-			if (name === 'dotnet-sdk') return '10.0.0';
-			return '';
-		});
-		vi.mocked(core.getBooleanInput).mockReturnValue(false);
-		vi.mocked(installDotNet).mockResolvedValue({
-			version: '10.0.0',
-			type: 'sdk',
-			path: '/path/to/sdk',
-			cacheHit: false,
-		} as InstallResult);
-
-		await run();
-
-		expect(installDotNet).toHaveBeenCalledWith({
-			version: '10.0.0',
-			type: 'sdk',
-			enableCache: false,
-		});
-	});
-
 	it('should fail when neither SDK nor Runtime specified', async () => {
 		vi.mocked(core.getInput).mockReturnValue('');
-		vi.mocked(core.getBooleanInput).mockReturnValue(true);
 
 		await run();
 
@@ -167,7 +106,6 @@ describe('main', () => {
 			if (name === 'dotnet-sdk') return '10.0.0';
 			return '';
 		});
-		vi.mocked(core.getBooleanInput).mockReturnValue(true);
 		vi.mocked(installDotNet).mockRejectedValue(new Error('Download failed'));
 
 		await run();
@@ -180,7 +118,6 @@ describe('main', () => {
 			if (name === 'dotnet-sdk') return '10.0.0';
 			return '';
 		});
-		vi.mocked(core.getBooleanInput).mockReturnValue(true);
 		vi.mocked(installDotNet).mockRejectedValue('Unknown error');
 
 		await run();

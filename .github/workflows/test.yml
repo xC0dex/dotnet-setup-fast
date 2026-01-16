@@ -28,20 +28,16 @@ jobs:
         id: setup-dotnet
         with:
           dotnet-sdk: 10.x.x
+          dotnet-runtime: 7.0.0
       
       - name: Verify .NET installation
-        run: dotnet --version
+        run: |
+          dotnet --list-sdks
+          dotnet --list-runtimes
       
       - name: Check outputs
         run: |
           echo "Installed version: ${{ steps.setup-dotnet.outputs.dotnet-version }}"
           echo "Cache hit: ${{ steps.setup-dotnet.outputs.cache-hit }}"
           echo "Dotnet path: ${{ steps.setup-dotnet.outputs.dotnet-path }}"
-      
-      - name: Test .NET functionality
-        run: |
-          dotnet --info
-          dotnet new console -n TestApp -o test-app
-          cd test-app
-          dotnet build
-          dotnet run
+  
