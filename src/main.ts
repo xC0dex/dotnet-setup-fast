@@ -28,32 +28,37 @@ export async function run(): Promise<void> {
 			);
 		}
 
-		const installations: InstallationResult[] = [];
+		// Prepare installation tasks
+		const installTasks: Promise<InstallationResult>[] = [];
 
-		// Install SDK if specified
 		if (sdkVersion) {
 			core.info(`Installing .NET SDK ${sdkVersion}...`);
-			core.debug('Starting SDK installation');
-			const result = await installDotNet({
-				version: sdkVersion,
-				type: 'sdk',
-			});
-			installations.push(result);
-			core.debug(`SDK installation result: ${JSON.stringify(result)}`);
-			core.info(`✓ .NET SDK ${result.version} installed at ${result.path}`);
+			installTasks.push(
+				installDotNet({
+					version: sdkVersion,
+					type: 'sdk',
+				}),
+			);
 		}
 
-		// Install Runtime if specified
 		if (runtimeVersion) {
 			core.info(`Installing .NET Runtime ${runtimeVersion}...`);
-			core.debug('Starting Runtime installation');
-			const result = await installDotNet({
-				version: runtimeVersion,
-				type: 'runtime',
-			});
-			installations.push(result);
-			core.debug(`Runtime installation result: ${JSON.stringify(result)}`);
-			core.info(`✓ .NET Runtime ${result.version} installed at ${result.path}`);
+			installTasks.push(
+				installDotNet({
+					version: runtimeVersion,
+					type: 'runtime',
+				}),
+			);
+		}
+
+		// Install in parallel
+		const installations = await Promise.all(installTasks);
+
+		// Log results
+		for (const result of installations) {
+			core.info(
+				`✓ .NET ${result.type} ${result.version} installed at ${result.path}`,
+			);
 		}
 
 		// Set outputs
@@ -61,9 +66,6 @@ export async function run(): Promise<void> {
 			.map((i) => `${i.type}:${i.version}`)
 			.join(', ');
 		const paths = installations.map((i) => i.path).join(':');
-
-		core.debug(`Setting output dotnet-version: ${versions}`);
-		core.debug(`Setting output dotnet-path: ${paths}`);
 
 		core.setOutput('dotnet-version', versions);
 		core.setOutput('dotnet-path', paths);
