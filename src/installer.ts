@@ -82,7 +82,6 @@ export async function installDotNet(
 	}
 
 	core.exportVariable('DOTNET_ROOT', installDir);
-	// core.exportVariable('DOTNET_MULTILEVEL_LOOKUP', '0');
 
 	return {
 		version: resolvedVersion,
