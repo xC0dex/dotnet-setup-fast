@@ -19,6 +19,10 @@ export async function run(): Promise<void> {
 		const runtimeVersion = core.getInput('dotnet-runtime');
 		const enableCache = core.getBooleanInput('enable-cache');
 
+		core.debug(`Input: dotnet-sdk='${sdkVersion}'`);
+		core.debug(`Input: dotnet-runtime='${runtimeVersion}'`);
+		core.debug(`Input: enable-cache='${enableCache}'`);
+
 		// Validate inputs - at least one must be specified
 		if (!sdkVersion && !runtimeVersion) {
 			throw new Error(
@@ -32,12 +36,14 @@ export async function run(): Promise<void> {
 		// Install SDK if specified
 		if (sdkVersion) {
 			core.info(`Installing .NET SDK ${sdkVersion}...`);
+			core.debug('Starting SDK installation');
 			const result = await installDotNet({
 				version: sdkVersion,
 				type: 'sdk',
 				enableCache,
 			});
 			installations.push(result);
+			core.debug(`SDK installation result: ${JSON.stringify(result)}`);
 			if (!result.cacheHit) {
 				overallCacheHit = false;
 			}
@@ -47,12 +53,14 @@ export async function run(): Promise<void> {
 		// Install Runtime if specified
 		if (runtimeVersion) {
 			core.info(`Installing .NET Runtime ${runtimeVersion}...`);
+			core.debug('Starting Runtime installation');
 			const result = await installDotNet({
 				version: runtimeVersion,
 				type: 'runtime',
 				enableCache,
 			});
 			installations.push(result);
+			core.debug(`Runtime installation result: ${JSON.stringify(result)}`);
 			if (!result.cacheHit) {
 				overallCacheHit = false;
 			}
@@ -64,6 +72,10 @@ export async function run(): Promise<void> {
 			.map((i) => `${i.type}:${i.version}`)
 			.join(', ');
 		const paths = installations.map((i) => i.path).join(':');
+
+		core.debug(`Setting output dotnet-version: ${versions}`);
+		core.debug(`Setting output cache-hit: ${overallCacheHit}`);
+		core.debug(`Setting output dotnet-path: ${paths}`);
 
 		core.setOutput('dotnet-version', versions);
 		core.setOutput('cache-hit', overallCacheHit.toString());

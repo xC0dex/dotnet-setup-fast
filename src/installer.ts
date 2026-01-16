@@ -27,13 +27,19 @@ export async function installDotNet(
 ): Promise<InstallResult> {
 	const { version, type, enableCache } = options;
 
+	core.debug(
+		`installDotNet called with: version='${version}', type='${type}', enableCache=${enableCache}`,
+	);
+
 	// Resolve wildcard versions to concrete version
+	core.debug(`Resolving version: ${version}`);
 	const resolvedVersion = await resolveVersion(version, type);
 	core.info(`Resolved version: ${resolvedVersion}`);
 
 	// Try to restore from cache
 	const cacheHit = false;
 	if (enableCache) {
+		core.debug('Cache is enabled, checking for cached installation');
 		const cacheResult = await setupCache(resolvedVersion, type);
 		if (cacheResult.hit) {
 			core.info(`✓ Restored from cache: ${cacheResult.path}`);
@@ -48,14 +54,19 @@ export async function installDotNet(
 
 	// Download and install
 	core.info(`Downloading .NET ${type} ${resolvedVersion}...`);
+	const platform = getPlatform();
+	const arch = getArchitecture();
+	core.debug(`Platform: ${platform}, Architecture: ${arch}`);
 	const downloadUrl = getDotNetDownloadUrl(resolvedVersion, type);
 	core.debug(`Download URL: ${downloadUrl}`);
 
+	core.debug('Starting download...');
 	const downloadPath = await toolCache.downloadTool(downloadUrl);
 	core.debug(`Downloaded to: ${downloadPath}`);
 
 	// Extract archive
 	core.info('Extracting archive...');
+	core.debug(`Extracting archive from: ${downloadPath}`);
 	const extractedPath = await extractArchive(downloadPath);
 	core.debug(`Extracted to: ${extractedPath}`);
 
@@ -63,6 +74,9 @@ export async function installDotNet(
 	let finalPath = extractedPath;
 	if (enableCache) {
 		core.info('Caching installation...');
+		core.debug(
+			`Caching directory: ${extractedPath} with key: dotnet-${type}, version: ${resolvedVersion}`,
+		);
 		const cachePath = await toolCache.cacheDir(
 			extractedPath,
 			`dotnet-${type}`,
@@ -70,13 +84,17 @@ export async function installDotNet(
 		);
 		finalPath = cachePath;
 		core.debug(`Cached to: ${cachePath}`);
+	} else {
+		core.debug('Cache disabled, using extracted path directly');
 	}
 
 	// Add to PATH
+	core.debug(`Adding to PATH: ${finalPath}`);
 	core.addPath(finalPath);
 	core.info('Added to PATH');
 
 	// Verify installation
+	core.debug('Verifying installation...');
 	const verified = await verifyDotNetInstallation();
 	if (!verified) {
 		throw new Error('Failed to verify .NET installation');

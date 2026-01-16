@@ -47,5 +47,17 @@ describe('functionName', () => {
 - Write clean, modular, maintainable code - self-documenting over comments
 - **Never use `any` or `unknown`** - always provide explicit types
 
+## Logging & Debugging
+- Use `core.info()` for user-visible messages
+- Use `core.debug()` extensively for troubleshooting - includes inputs, intermediate values, API responses, paths
+- Log at key points: function entry, before/after async operations, API calls, cache operations
+- Include context in debug messages (e.g., variable values, operation results)
+
 ## Validation Workflow
-**Always validate changes before completion** by running the commands mentioned in Build System.
+**Always validate changes before completion** by running in this order:
+1. `pnpm format` - Auto-fix formatting issues
+2. `pnpm lint` - Check and fix linting errors
+3. `pnpm build` - Ensure TypeScript compiles and Vite bundles successfully
+4. `pnpm test` - Verify all tests pass
+
+This ensures code quality and prevents breaking changes.
