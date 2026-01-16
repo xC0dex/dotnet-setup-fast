@@ -161,4 +161,26 @@ describe('resolveVersion', () => {
 			'Failed to resolve version 10.x: Network error',
 		);
 	});
+
+	it('should throw error when API response is malformed', async () => {
+		global.fetch = vi.fn().mockResolvedValue({
+			ok: true,
+			json: async () => ({}),
+		});
+
+		await expect(resolveVersion('10.x', 'sdk')).rejects.toThrow(
+			'Failed to resolve version 10.x: Invalid API response: releases data is missing or malformed',
+		);
+	});
+
+	it('should throw error when API response has null releases', async () => {
+		global.fetch = vi.fn().mockResolvedValue({
+			ok: true,
+			json: async () => ({ releases: null }),
+		});
+
+		await expect(resolveVersion('10.x', 'sdk')).rejects.toThrow(
+			'Failed to resolve version 10.x: Invalid API response: releases data is missing or malformed',
+		);
+	});
 });

@@ -21,12 +21,19 @@ export async function resolveVersion(
 		}
 
 		const data = (await response.json()) as {
-			releases: Array<{
+			releases?: Array<{
 				'channel-version': string;
 				'latest-sdk': string;
 				'latest-runtime': string;
 			}>;
 		};
+
+		// Validate API response
+		if (!data || !Array.isArray(data.releases)) {
+			throw new Error(
+				'Invalid API response: releases data is missing or malformed',
+			);
+		}
 
 		// Match version pattern
 		const versionPattern = version.replace(/\./g, '\\.').replace(/x/g, '\\d+');
@@ -35,7 +42,7 @@ export async function resolveVersion(
 		// Filter and sort matching versions
 		const matchingVersions = data.releases
 			.map((r) => (type === 'sdk' ? r['latest-sdk'] : r['latest-runtime']))
-			.filter((v) => regex.test(v))
+			.filter((v) => v && regex.test(v))
 			.sort((a, b) => compareVersions(b, a)); // Descending order
 
 		if (matchingVersions.length === 0) {

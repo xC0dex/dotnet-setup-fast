@@ -10,7 +10,7 @@ interface InstallationResult {
 /**
  * Main entry point for the GitHub Action
  */
-async function run(): Promise<void> {
+export async function run(): Promise<void> {
 	try {
 		core.info('Setting up .NET');
 
