@@ -104,6 +104,13 @@ export async function installDotNet(
 		core.debug('DOTNET_ROOT already set');
 	}
 
+	// Disable multi-level lookup to prevent finding system-wide .NET
+	if (!process.env.DOTNET_MULTILEVEL_LOOKUP) {
+		core.debug('Setting DOTNET_MULTILEVEL_LOOKUP=0');
+		core.exportVariable('DOTNET_MULTILEVEL_LOOKUP', '0');
+		core.info('Disabled multi-level lookup');
+	}
+
 	return {
 		version: resolvedVersion,
 		type,
