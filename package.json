@@ -24,6 +24,8 @@
 		"test:watch": "vitest",
 		"format": "biome format --write",
 		"lint": "biome lint --write",
+		"format:ci": "biome format",
+		"lint:ci": "biome lint",
 		"validate": "pnpm format && pnpm lint && pnpm build && pnpm test"
 	},
 	"dependencies": {
