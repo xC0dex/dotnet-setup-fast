@@ -99,7 +99,6 @@ export async function installDotNet(
 	try {
 		await io.cp(extractedPath, installDir, {
 			recursive: true,
-			force: true,
 			copySourceDirectory: false,
 		});
 	} catch (error) {
