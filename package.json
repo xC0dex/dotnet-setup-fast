@@ -18,6 +18,7 @@
 		"type": "git",
 		"url": "https://github.com/xC0dex/dotnet-setup-fast"
 	},
+	"packageManager": "pnpm@10.28.0",
 	"scripts": {
 		"build": "tsc && vite build",
 		"test": "vitest run",
