@@ -4,7 +4,7 @@
 	"version": "0.0.0",
 	"type": "module",
 	"main": "dist/index.js",
-	"description": "High-performance GitHub Action for .NET SDK and Runtime installation with parallel downloads and intelligent version resolution",
+	"description": "High-performance GitHub Action for .NET SDK and Runtime installation with parallel downloads, caching, and intelligent version resolution",
 	"keywords": [
 		"github-actions",
 		"dotnet",
