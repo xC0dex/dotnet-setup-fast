@@ -123,7 +123,7 @@ export async function run(): Promise<void> {
 		if (deduplicated.aspnetcore.length > 0) {
 			installPlan.push(`ASP.NET Core ${deduplicated.aspnetcore.join(', ')}`);
 		}
-		core.info(`📦 Installing .NET: ${installPlan.join(' | ')}`);
+		core.info(`Installing .NET: ${installPlan.join(' | ')}`);
 
 		// Prepare installation tasks
 		const installTasks: Promise<InstallationResult>[] = [];

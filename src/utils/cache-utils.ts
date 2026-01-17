@@ -43,18 +43,18 @@ export function generateCacheKey(versions: CacheVersions): string {
 export async function restoreCache(cacheKey: string): Promise<boolean> {
 	const installDir = getDotNetInstallDirectory();
 
-	core.info(`🔍 Looking for cache: ${cacheKey}`);
+	core.info(`Looking for cache: ${cacheKey}`);
 	core.debug(`Cache restore path: ${installDir}`);
 
 	try {
 		const restoredKey = await cache.restoreCache([installDir], cacheKey);
 
 		if (restoredKey) {
-			core.info(`✓ Cache restored: ${restoredKey}`);
+			core.info(`Cache restored: ${restoredKey}`);
 			return true;
 		}
 
-		core.info('⚠ Cache not found, will download .NET');
+		core.info('Cache not found, will download .NET');
 		return false;
 	} catch (error) {
 		const errorMsg = error instanceof Error ? error.message : String(error);
@@ -70,12 +70,12 @@ export async function restoreCache(cacheKey: string): Promise<boolean> {
 export async function saveCache(cacheKey: string): Promise<void> {
 	const installDir = getDotNetInstallDirectory();
 
-	core.info(`💾 Saving cache: ${cacheKey}`);
+	core.info(`Saving cache: ${cacheKey}`);
 	core.debug(`Cache save path: ${installDir}`);
 
 	try {
 		await cache.saveCache([installDir], cacheKey);
-		core.info('✓ Cache saved successfully');
+		core.info('Cache saved successfully');
 	} catch (error) {
 		const errorMsg = error instanceof Error ? error.message : String(error);
 
