@@ -6,6 +6,7 @@ import {
 } from './utils/global-json-reader';
 import { parseVersions } from './utils/input-parser';
 import { deduplicateVersions } from './utils/version-deduplicator';
+import { fetchAndCacheReleases } from './utils/version-resolver';
 
 interface InstallationResult {
 	version: string;
@@ -53,6 +54,8 @@ export async function run(): Promise<void> {
 				'At least one of dotnet-sdk, dotnet-runtime, or dotnet-aspnetcore must be specified',
 			);
 		}
+
+		await fetchAndCacheReleases();
 
 		// Remove redundant versions
 		const deduplicated = await deduplicateVersions({
