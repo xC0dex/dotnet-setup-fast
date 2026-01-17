@@ -64,9 +64,13 @@ export async function fetchAndCacheReleases(): Promise<void> {
 export function resolveVersion(version: string, type: DotnetType): string {
 	const versionLower = version.toLowerCase();
 
-	// Handle LTS and STS keywords
+	// Handle LTS, STS, and LATEST keywords
 	if (versionLower === 'lts' || versionLower === 'sts') {
 		return resolveSupportTier(versionLower, type);
+	}
+
+	if (versionLower === 'latest') {
+		return resolveLatest(type);
 	}
 
 	// If version has no wildcards, return as-is
@@ -101,6 +105,41 @@ export function resolveVersion(version: string, type: DotnetType): string {
 
 	core.debug(`Resolved ${version} -> ${matchingVersions[0]}`);
 	return matchingVersions[0];
+}
+
+/**
+ * Resolve LATEST to the newest available version
+ */
+function resolveLatest(type: DotnetType): string {
+	core.debug(`Resolving LATEST version for ${type}`);
+
+	if (!cachedReleases) {
+		throw new Error(
+			'Cache not initialized. Call initializeCache() before resolveVersion().',
+		);
+	}
+
+	const versionType = type === 'sdk' ? 'sdk' : 'runtime';
+
+	// Sort releases by channel version (descending) and pick the first
+	const sortedReleases = [...cachedReleases].sort((a, b) =>
+		compareVersions(b['channel-version'], a['channel-version']),
+	);
+
+	if (sortedReleases.length === 0) {
+		throw new Error('No releases found');
+	}
+
+	const latestRelease = sortedReleases[0];
+	const resolvedVersion =
+		versionType === 'sdk'
+			? latestRelease['latest-sdk']
+			: latestRelease['latest-runtime'];
+
+	core.info(
+		`Resolved LATEST -> ${resolvedVersion} (channel ${latestRelease['channel-version']})`,
+	);
+	return resolvedVersion;
 }
 
 /**

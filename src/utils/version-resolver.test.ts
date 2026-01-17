@@ -317,4 +317,90 @@ describe('resolveVersion', () => {
 
 		expect(() => resolveVersion('sts', 'sdk')).toThrow('No STS releases found');
 	});
+
+	it('should resolve "latest" to newest SDK version', () => {
+		setCachedReleases([
+			{
+				'channel-version': '10.0',
+				'latest-sdk': '10.0.402',
+				'latest-runtime': '10.0.2',
+				'release-type': 'sts',
+			},
+			{
+				'channel-version': '9.0',
+				'latest-sdk': '9.0.500',
+				'latest-runtime': '9.0.5',
+				'release-type': 'lts',
+			},
+			{
+				'channel-version': '8.0',
+				'latest-sdk': '8.0.404',
+				'latest-runtime': '8.0.11',
+				'release-type': 'lts',
+			},
+		]);
+
+		const result = resolveVersion('latest', 'sdk');
+		expect(result).toBe('10.0.402');
+	});
+
+	it('should resolve "LATEST" (uppercase) to newest SDK version', () => {
+		setCachedReleases([
+			{
+				'channel-version': '10.0',
+				'latest-sdk': '10.0.402',
+				'latest-runtime': '10.0.2',
+				'release-type': 'sts',
+			},
+			{
+				'channel-version': '9.0',
+				'latest-sdk': '9.0.500',
+				'latest-runtime': '9.0.5',
+				'release-type': 'lts',
+			},
+		]);
+
+		const result = resolveVersion('LATEST', 'sdk');
+		expect(result).toBe('10.0.402');
+	});
+
+	it('should resolve "latest" for runtime', () => {
+		setCachedReleases([
+			{
+				'channel-version': '10.0',
+				'latest-sdk': '10.0.402',
+				'latest-runtime': '10.0.2',
+				'release-type': 'sts',
+			},
+			{
+				'channel-version': '9.0',
+				'latest-sdk': '9.0.500',
+				'latest-runtime': '9.0.5',
+				'release-type': 'lts',
+			},
+		]);
+
+		const result = resolveVersion('latest', 'runtime');
+		expect(result).toBe('10.0.2');
+	});
+
+	it('should resolve "latest" for aspnetcore', () => {
+		setCachedReleases([
+			{
+				'channel-version': '10.0',
+				'latest-sdk': '10.0.402',
+				'latest-runtime': '10.0.2',
+				'release-type': 'sts',
+			},
+		]);
+
+		const result = resolveVersion('latest', 'aspnetcore');
+		expect(result).toBe('10.0.2');
+	});
+
+	it('should throw error when no releases found for latest', () => {
+		setCachedReleases([]);
+
+		expect(() => resolveVersion('latest', 'sdk')).toThrow('No releases found');
+	});
 });
