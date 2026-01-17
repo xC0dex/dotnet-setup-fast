@@ -25,8 +25,9 @@ jobs:
         uses: ./
         id: setup-dotnet
         with:
-          dotnet-sdk: lts, 10.0.x
+          #dotnet-sdk: lts, 10.0.x
           dotnet-aspnetcore: sts, 8.x.x
+          dotnet-runtime: latest
           cache: false
 
       - name: Verify .NET installation
@@ -109,7 +110,7 @@ jobs:
         id: setup-dotnet
         with:
           dotnet-sdk: lts, sts
-          dotnet-runtime: lts
+          dotnet-runtime: latest
           dotnet-aspnetcore: sts, 8.0.0
 
       - name: Verify installation
@@ -124,3 +125,4 @@ jobs:
         run: |
           echo "Installed: ${{ steps.setup-dotnet.outputs.dotnet-version }}"
           echo "Path: ${{ steps.setup-dotnet.outputs.dotnet-path }}"
+          echo "Cache-Hit: ${{ steps.setup-dotnet.outputs.cache-hit }}" 
