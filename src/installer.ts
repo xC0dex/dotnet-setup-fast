@@ -52,7 +52,6 @@ export async function installDotNet(
 	const downloadUrl = getDotNetDownloadUrl(version, type);
 	core.debug(`${prefix} Download URL: ${downloadUrl}`);
 
-	core.info(`${prefix} Downloading...`);
 	let downloadPath: string;
 	try {
 		downloadPath = await downloadWithRetry(downloadUrl, 3);
