@@ -115,6 +115,26 @@ describe('resolveVersion', () => {
 		expect(result).toBe('10.0.402');
 	});
 
+	it('should resolve wildcards with uppercase X', () => {
+		setCachedReleases([
+			{
+				'channel-version': '10.0',
+				'latest-sdk': '10.0.402',
+				'latest-runtime': '10.0.2',
+				'release-type': 'sts',
+			},
+			{
+				'channel-version': '10.1',
+				'latest-sdk': '10.1.100',
+				'latest-runtime': '10.1.0',
+				'release-type': 'sts',
+			},
+		]);
+
+		expect(resolveVersion('10.X.X', 'sdk')).toBe('10.1.100');
+		expect(resolveVersion('10.0.X', 'sdk')).toBe('10.0.402');
+	});
+
 	it('should throw error when no matching version found', () => {
 		setCachedReleases([
 			{

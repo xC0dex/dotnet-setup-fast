@@ -74,7 +74,7 @@ export function resolveVersion(version: string, type: DotnetType): string {
 	}
 
 	// If version has no wildcards, return as-is
-	if (!version.includes('x')) {
+	if (!version.includes('x') && !version.includes('X')) {
 		return version;
 	}
 
@@ -84,7 +84,7 @@ export function resolveVersion(version: string, type: DotnetType): string {
 		);
 	}
 
-	const versionPattern = version.replace(/\./g, '\\.').replace(/x/g, '\\d+');
+	const versionPattern = version.replace(/\./g, '\\.').replace(/[xX]/g, '\\d+');
 	const regex = new RegExp(`^${versionPattern}$`);
 
 	const versionType = type === 'sdk' ? 'sdk' : 'runtime';
