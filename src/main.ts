@@ -25,6 +25,7 @@ export async function run(): Promise<void> {
 		const runtimeInput = core.getInput('dotnet-runtime');
 		const aspnetcoreInput = core.getInput('dotnet-aspnetcore');
 		const globalJsonInput = core.getInput('global-json');
+		const cacheEnabled = core.getBooleanInput('cache');
 
 		let sdkVersions: string[] = [];
 
@@ -66,32 +67,32 @@ export async function run(): Promise<void> {
 			aspnetcore: aspnetcoreVersions,
 		});
 
-		// Generate cache key from resolved versions
-		const cacheKey = generateCacheKey(deduplicated);
+		// Try to restore from cache if enabled
+		if (cacheEnabled) {
+			const cacheKey = generateCacheKey(deduplicated);
+			const cacheRestored = await restoreCache(cacheKey);
 
-		// Try to restore from cache
-		const cacheRestored = await restoreCache(cacheKey);
+			if (cacheRestored) {
+				// Cache hit - set environment variables and exit early
+				const installDir = getDotNetInstallDirectory();
 
-		if (cacheRestored) {
-			// Cache hit - set environment variables and exit early
-			const installDir = getDotNetInstallDirectory();
+				if (!process.env.PATH?.includes(installDir)) {
+					core.addPath(installDir);
+				}
 
-			if (!process.env.PATH?.includes(installDir)) {
-				core.addPath(installDir);
+				core.exportVariable('DOTNET_ROOT', installDir);
+
+				const versions = [
+					...deduplicated.sdk.map((v) => `sdk:${v}`),
+					...deduplicated.runtime.map((v) => `runtime:${v}`),
+					...deduplicated.aspnetcore.map((v) => `aspnetcore:${v}`),
+				].join(', ');
+
+				core.setOutput('dotnet-version', versions);
+				core.setOutput('dotnet-path', installDir);
+				core.info('✅ Installation complete (from cache)');
+				return;
 			}
-
-			core.exportVariable('DOTNET_ROOT', installDir);
-
-			const versions = [
-				...deduplicated.sdk.map((v) => `sdk:${v}`),
-				...deduplicated.runtime.map((v) => `runtime:${v}`),
-				...deduplicated.aspnetcore.map((v) => `aspnetcore:${v}`),
-			].join(', ');
-
-			core.setOutput('dotnet-version', versions);
-			core.setOutput('dotnet-path', installDir);
-			core.info('✅ Installation complete (from cache)');
-			return;
 		}
 
 		// Show installation plan
@@ -144,8 +145,11 @@ export async function run(): Promise<void> {
 
 		core.info(`✅ Installation complete in ${installDuration}s`);
 
-		// Save to cache
-		await saveCache(cacheKey);
+		// Save to cache if enabled
+		if (cacheEnabled) {
+			const cacheKey = generateCacheKey(deduplicated);
+			await saveCache(cacheKey);
+		}
 
 		// Set outputs
 		const versions = installations
