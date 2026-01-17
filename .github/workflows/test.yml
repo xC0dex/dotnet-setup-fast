@@ -14,23 +14,11 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest]
-        dotnet-version: ['10.0.x']
     
     steps:
       - name: Checkout
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
       
-      # - name: Setup .NET using this action
-      #   uses: ./
-      #   id: setup-dotnet
-      #   with:
-      #     dotnet-sdk: |
-      #       10.x.x
-      #       10.0.102
-      #       7.0.100
-      #     dotnet-runtime: 7.0.3, 6.0.21, 7.0.0
-      #     dotnet-aspnetcore: 7.x.x, 7.0.0
-
       - name: Setup .NET using this action
         uses: ./
         id: setup-dotnet
@@ -42,9 +30,66 @@ jobs:
         run: |
           dotnet --list-sdks
           dotnet --list-runtimes
+      
       - name: Check outputs
         run: |
           echo "Installed version: ${{ steps.setup-dotnet.outputs.dotnet-version }}"
-          echo "Cache hit: ${{ steps.setup-dotnet.outputs.cache-hit }}"
           echo "Dotnet path: ${{ steps.setup-dotnet.outputs.dotnet-path }}"
-  
+
+  test-global-json:
+    name: Test global.json Support
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        sample:
+          - name: 'Exact Version'
+            file: 'global.json.exact'
+            expected-major: '10'
+          - name: 'Latest Patch'
+            file: 'global.json.patch'
+            expected-major: '9'
+          - name: 'Latest Feature'
+            file: 'global.json.feature'
+            expected-major: '8'
+          - name: 'Latest Minor'
+            file: 'global.json.minor'
+            expected-major: '8'
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
+      
+      - name: Setup test environment with global.json
+        run: |
+          cp samples/${{ matrix.sample.file }} global.json
+          cat global.json
+      
+      - name: Setup .NET from global.json
+        uses: ./
+        id: setup-dotnet
+      
+      - name: Verify SDK installation
+        run: dotnet --list-sdks
+
+  test-global-json-with-runtime:
+    name: Test global.json Support with Runtime
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
+      
+      - name: Setup test environment with global.json
+        run: |
+          cp samples/global.json.feature global.json
+          cat global.json
+      
+      - name: Setup .NET from global.json
+        uses: ./
+        id: setup-dotnet
+        with:
+          dotnet-aspnetcore: 10.x.x
+      
+      - name: Verify SDK & Runtime installation
+        run: |
+          dotnet --list-sdks
+          dotnet --list-runtimes
