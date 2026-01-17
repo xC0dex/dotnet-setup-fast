@@ -46,7 +46,8 @@ export async function readGlobalJson(filePath: string): Promise<string | null> {
 
 		// Check if this is a preview version using semver prerelease pattern
 		// Pattern: major.minor.patch-prerelease (e.g., 9.0.100-preview.7.24407.12)
-		const semverPattern = /^(\d+\.\d+\.\d+)(-[\w.]+)?$/;
+		// Prerelease identifiers can contain alphanumerics, dots, and hyphens per semver spec
+		const semverPattern = /^(\d+\.\d+\.\d+)(-[a-zA-Z0-9.-]+)?$/;
 		const match = version.match(semverPattern);
 
 		if (!match) {
@@ -55,7 +56,6 @@ export async function readGlobalJson(filePath: string): Promise<string | null> {
 			);
 		}
 
-		const baseVersion = match[1];
 		const prereleaseTag = match[2];
 		const isPreview = !!prereleaseTag;
 		const allowPrerelease = parsed.sdk.allowPrerelease ?? false;
