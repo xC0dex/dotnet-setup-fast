@@ -44,14 +44,26 @@ export async function readGlobalJson(filePath: string): Promise<string | null> {
 			);
 		}
 
-		// Validate version format: major.minor.patch
-		const versionParts = version.split('.');
-		if (
-			versionParts.length !== 3 ||
-			versionParts.some((p) => !/^\d+$/.test(p))
-		) {
+		// Check if this is a preview version using semver prerelease pattern
+		// Pattern: major.minor.patch-prerelease (e.g., 9.0.100-preview.7.24407.12)
+		// Prerelease identifiers can contain alphanumerics, dots, and hyphens per semver spec
+		const semverPattern = /^(\d+\.\d+\.\d+)(-[a-zA-Z0-9.-]+)?$/;
+		const match = version.match(semverPattern);
+
+		if (!match) {
 			throw new Error(
-				`Invalid version format in global.json: '${version}'. Expected format: major.minor.patch (e.g., 10.0.100)`,
+				`Invalid version format in global.json: '${version}'. Expected format: major.minor.patch (e.g., 10.0.100) or major.minor.patch-prerelease (e.g., 9.0.100-preview.7)`,
+			);
+		}
+
+		const prereleaseTag = match[2];
+		const isPreview = !!prereleaseTag;
+		const allowPrerelease = parsed.sdk.allowPrerelease ?? false;
+
+		// Enforce allowPrerelease requirement for preview versions
+		if (isPreview && !allowPrerelease) {
+			throw new Error(
+				`Preview version '${version}' specified in global.json, but 'allowPrerelease' is not set to true. Set "sdk": { "version": "${version}", "allowPrerelease": true } to use preview versions.`,
 			);
 		}
 

@@ -250,7 +250,21 @@ describe('readGlobalJson', () => {
 		);
 	});
 
-	it('should handle allowPrerelease flag', async () => {
+	it('should reject version with spaces', async () => {
+		const content = JSON.stringify({
+			sdk: {
+				version: '8.0.100 preview',
+				allowPrerelease: true,
+			},
+		});
+		await fs.writeFile(testFile, content, 'utf-8');
+
+		await expect(readGlobalJson(testFile)).rejects.toThrow(
+			"Invalid version format in global.json: '8.0.100 preview'",
+		);
+	});
+
+	it('should handle allowPrerelease flag with stable version', async () => {
 		const content = JSON.stringify({
 			sdk: {
 				version: '8.0.100',
@@ -261,6 +275,99 @@ describe('readGlobalJson', () => {
 
 		const version = await readGlobalJson(testFile);
 		expect(version).toBe('8.0.100');
+	});
+
+	it('should accept preview version when allowPrerelease is true', async () => {
+		const content = JSON.stringify({
+			sdk: {
+				version: '9.0.100-preview.7',
+				allowPrerelease: true,
+			},
+		});
+		await fs.writeFile(testFile, content, 'utf-8');
+
+		const version = await readGlobalJson(testFile);
+		expect(version).toBe('9.0.100-preview.7');
+	});
+
+	it('should accept preview version with complex prerelease suffix', async () => {
+		const content = JSON.stringify({
+			sdk: {
+				version: '9.0.100-preview.7.24407.12',
+				allowPrerelease: true,
+			},
+		});
+		await fs.writeFile(testFile, content, 'utf-8');
+
+		const version = await readGlobalJson(testFile);
+		expect(version).toBe('9.0.100-preview.7.24407.12');
+	});
+
+	it('should reject preview version when allowPrerelease is false', async () => {
+		const content = JSON.stringify({
+			sdk: {
+				version: '9.0.100-preview.7',
+				allowPrerelease: false,
+			},
+		});
+		await fs.writeFile(testFile, content, 'utf-8');
+
+		await expect(readGlobalJson(testFile)).rejects.toThrow(
+			"Preview version '9.0.100-preview.7' specified in global.json, but 'allowPrerelease' is not set to true",
+		);
+	});
+
+	it('should reject preview version when allowPrerelease is not specified', async () => {
+		const content = JSON.stringify({
+			sdk: {
+				version: '9.0.100-preview.7',
+			},
+		});
+		await fs.writeFile(testFile, content, 'utf-8');
+
+		await expect(readGlobalJson(testFile)).rejects.toThrow(
+			"Preview version '9.0.100-preview.7' specified in global.json, but 'allowPrerelease' is not set to true",
+		);
+	});
+
+	it('should accept rc versions when allowPrerelease is true', async () => {
+		const content = JSON.stringify({
+			sdk: {
+				version: '9.0.100-rc.2',
+				allowPrerelease: true,
+			},
+		});
+		await fs.writeFile(testFile, content, 'utf-8');
+
+		const version = await readGlobalJson(testFile);
+		expect(version).toBe('9.0.100-rc.2');
+	});
+
+	it('should accept alpha/beta versions when allowPrerelease is true', async () => {
+		const content = JSON.stringify({
+			sdk: {
+				version: '9.0.100-alpha.1',
+				allowPrerelease: true,
+			},
+		});
+		await fs.writeFile(testFile, content, 'utf-8');
+
+		const version = await readGlobalJson(testFile);
+		expect(version).toBe('9.0.100-alpha.1');
+	});
+
+	it('should apply rollForward: latestMajor with allowPrerelease flag', async () => {
+		const content = JSON.stringify({
+			sdk: {
+				version: '9.0.0',
+				rollForward: 'latestMajor',
+				allowPrerelease: true,
+			},
+		});
+		await fs.writeFile(testFile, content, 'utf-8');
+
+		const version = await readGlobalJson(testFile);
+		expect(version).toBe('x.x.x');
 	});
 });
 

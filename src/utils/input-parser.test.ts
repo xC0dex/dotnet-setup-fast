@@ -61,6 +61,25 @@ describe('parseVersions', () => {
 		]);
 	});
 
+	it('should handle version with rc suffix', () => {
+		expect(parseVersions('9.0.100-rc.2, 8.0.0')).toEqual([
+			'9.0.100-rc.2',
+			'8.0.0',
+		]);
+	});
+
+	it('should handle version with complex prerelease identifier', () => {
+		expect(parseVersions('9.0.100-preview.7.24407.12')).toEqual([
+			'9.0.100-preview.7.24407.12',
+		]);
+	});
+
+	it('should handle multiple preview versions', () => {
+		expect(
+			parseVersions('9.0.100-preview.7, 9.0.100-preview.6, 9.0.0'),
+		).toEqual(['9.0.100-preview.7', '9.0.100-preview.6', '9.0.0']);
+	});
+
 	it('should trim versions with extra spaces', () => {
 		expect(parseVersions('  10.x.x  ,  9.0.0  ')).toEqual(['10.x.x', '9.0.0']);
 	});
