@@ -17,6 +17,23 @@ interface InstallationResult {
 }
 
 /**
+ * Format version plan for display
+ */
+function formatVersionPlan(deduplicated: VersionSet): string {
+	const parts: string[] = [];
+	if (deduplicated.sdk.length > 0) {
+		parts.push(`SDK ${deduplicated.sdk.join(', ')}`);
+	}
+	if (deduplicated.runtime.length > 0) {
+		parts.push(`Runtime ${deduplicated.runtime.join(', ')}`);
+	}
+	if (deduplicated.aspnetcore.length > 0) {
+		parts.push(`ASP.NET Core ${deduplicated.aspnetcore.join(', ')}`);
+	}
+	return parts.join(' | ');
+}
+
+/**
  * Try to restore .NET installations from cache
  * @returns true if cache was restored successfully, false otherwise
  */
@@ -32,6 +49,8 @@ async function tryRestoreFromCache(deduplicated: VersionSet): Promise<boolean> {
 		}
 
 		core.exportVariable('DOTNET_ROOT', installDir);
+
+		core.info(`Restored .NET from cache: ${formatVersionPlan(deduplicated)}`);
 
 		const versions = [
 			...deduplicated.sdk.map((v) => `sdk:${v}`),
@@ -113,20 +132,8 @@ export async function run(): Promise<void> {
 			return;
 		}
 
-		// Show installation plan
-		const installPlan: string[] = [];
-		if (deduplicated.sdk.length > 0) {
-			installPlan.push(`SDK ${deduplicated.sdk.join(', ')}`);
-		}
-		if (deduplicated.runtime.length > 0) {
-			installPlan.push(`Runtime ${deduplicated.runtime.join(', ')}`);
-		}
-		if (deduplicated.aspnetcore.length > 0) {
-			installPlan.push(`ASP.NET Core ${deduplicated.aspnetcore.join(', ')}`);
-		}
-		core.info(`Installing .NET: ${installPlan.join(' | ')}`);
+		core.info(`Installing .NET: ${formatVersionPlan(deduplicated)}`);
 
-		// Prepare installation tasks
 		const installTasks: Promise<InstallationResult>[] = [];
 
 		for (const version of deduplicated.sdk) {
