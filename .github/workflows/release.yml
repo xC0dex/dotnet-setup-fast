@@ -1,0 +1,35 @@
+name: Update major tag
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  update-major-tag:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
+        with:
+          fetch-depth: 0
+
+      - name: Update major tag
+        run: |
+          tag="${{ github.ref_name }}"
+          major=$(echo "$tag" | sed -E 's/^v?([0-9]+).*/\1/')
+          if [[ -z "$major" ]]; then
+            echo "Failed to parse major version from tag: $tag" >&2
+            exit 1
+          fi
+          major_tag="v$major"
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          commit=$(git rev-list -n 1 "$tag")
+          git tag -f "$major_tag" "$commit"
+          git push origin "refs/tags/$major_tag" --force

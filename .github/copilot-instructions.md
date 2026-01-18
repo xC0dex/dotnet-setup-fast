@@ -1,7 +1,7 @@
-# Copilot Instructions for setup-dotnet
+# Copilot Instructions for fast-actions/setup-dotnet
 
 ## Project Overview
-GitHub Action for .NET SDK/Runtime installation with caching. TypeScript + Vite + Biome. This is NOT the official action/setup-dotnet GitHub Action and we don't want to use this official Action.
+GitHub Action for .NET SDK/Runtime installation with caching. TypeScript + Vite + Biome. This is a custom action published as `fast-actions/setup-dotnet`. This is NOT the official `actions/setup-dotnet` GitHub Action and we don't want to use the official Action.
 
 ## Architecture
 - [src/main.ts](../src/main.ts) - Entry point, orchestrates installer and global.json reading
