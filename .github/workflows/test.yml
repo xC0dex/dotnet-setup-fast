@@ -24,7 +24,7 @@ jobs:
           dotnet-sdk: latest
           dotnet-aspnetcore: sts, 8.x.x
           dotnet-runtime: latest
-          cache: false
+          cache: true
 
       - name: Verify .NET installation
         run: |
