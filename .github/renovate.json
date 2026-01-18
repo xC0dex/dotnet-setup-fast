@@ -11,5 +11,11 @@
 	},
 	"github-actions": {
 		"managerFilePatterns": ["/\\.md$/"]
-	}
+	},
+	"packageRules": [
+		{
+			"matchDepTypes": ["uses-with"],
+			"enabled": false
+		}
+	]
 }
