@@ -1,6 +1,7 @@
 import * as core from '@actions/core';
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
+import { parse as parseJsonc } from 'jsonc-parser';
 
 interface GlobalJson {
 	sdk?: {
@@ -21,7 +22,14 @@ export async function readGlobalJson(filePath: string): Promise<string | null> {
 
 		let parsed: GlobalJson;
 		try {
-			parsed = JSON.parse(content) as GlobalJson;
+			// Parse JSON with comments support (JavaScript/C# style)
+			parsed = parseJsonc(content) as GlobalJson;
+
+			// jsonc-parser returns undefined for invalid JSON instead of throwing
+			if (parsed === undefined) {
+				throw new Error('Unable to parse JSON content');
+			}
+
 			core.debug(`Parsed global.json: ${JSON.stringify(parsed)}`);
 		} catch (error) {
 			const errorMsg = error instanceof Error ? error.message : String(error);

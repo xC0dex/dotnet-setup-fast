@@ -34,7 +34,8 @@
 		"@actions/exec": "2.0.0",
 		"@actions/github": "7.0.0",
 		"@actions/io": "2.0.0",
-		"@actions/tool-cache": "3.0.0"
+		"@actions/tool-cache": "3.0.0",
+		"jsonc-parser": "3.3.1"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "2.3.11",
