@@ -64,6 +64,37 @@ describe('functionName', () => {
 - Focus on values that help diagnose issues (inputs, outputs, decisions)
 - Prefer concise debug messages: `Resolved x.x.x -> 10.0.100` instead of multiple separate logs
 
+## Pull Request Guidelines
+**PR Titles** must follow the conventional commits format with prefixes like:
+- `feat: add support for ARM64 architecture`
+- `ci: update GitHub Actions workflow`
+
+## Documentation Guidelines
+When writing documentation:
+- **Simple and Clear**: Use straightforward language that's easy to understand. Avoid jargon unless necessary; if used, explain it.
+- **Precise**: Be exact and concise. Remove unnecessary words and focus on essential information.
+- **Realistic Examples**: All code examples and use cases should reflect real-world scenarios, not contrived edge cases.
+- **Clear Structure**: 
+  - Start with a brief overview of what the section covers
+  - Use headings, bullet points, and code blocks for readability
+  - Follow a logical flow: concept → explanation → example → expected behavior
+  - Keep related information grouped together
+
+Example:
+```markdown
+## Cache Restoration
+
+The action attempts to restore cached .NET installations to speed up subsequent workflow runs.
+
+**How it works:**
+1. Generates a cache key based on platform, architecture, and installed versions
+2. Checks if a matching cache entry exists
+3. Restores files to the .NET installation directory if found
+
+**Example:**
+First run downloads .NET 8.0.0 (≈150 MB). Second run with same version restores from cache in seconds.
+```
+
 ## Validation Workflow
 **Always validate changes before completion** by running the following command: `pnpm validate`.
 
