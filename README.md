@@ -1,6 +1,6 @@
 # setup-dotnet
 
-⚡ High-performance GitHub Action for .NET SDK/Runtime installation with parallel downloads, intelligent version resolution, and caching.
+High-performance GitHub Action for .NET SDK/Runtime installation with parallel downloads, intelligent version resolution, and caching.
 
 ## Quick Setup
 
