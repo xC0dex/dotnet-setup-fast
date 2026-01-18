@@ -12,20 +12,16 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest]
+        os: [ubuntu-latest, windows-latest, macos-latest]
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
-
-      - name: Debug - Print environment variables
-        run: env | sort
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
 
       - name: Setup .NET using this action
         uses: ./
         id: setup-dotnet
         with:
-          #dotnet-sdk: lts, 10.0.x
+    
           dotnet-aspnetcore: sts, 8.x.x
           dotnet-runtime: latest
           cache: false
@@ -34,11 +30,6 @@ jobs:
         run: |
           dotnet --list-sdks
           dotnet --list-runtimes
-
-      - name: Check outputs
-        run: |
-          echo "Installed version: ${{ steps.setup-dotnet.outputs.dotnet-version }}"
-          echo "Dotnet path: ${{ steps.setup-dotnet.outputs.dotnet-path }}"
 
   test-global-json:
     name: Test global.json Support
