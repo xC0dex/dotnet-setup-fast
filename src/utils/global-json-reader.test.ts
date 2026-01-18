@@ -250,7 +250,21 @@ describe('readGlobalJson', () => {
 		);
 	});
 
-	it('should handle allowPrerelease flag', async () => {
+	it('should reject version with spaces', async () => {
+		const content = JSON.stringify({
+			sdk: {
+				version: '8.0.100 preview',
+				allowPrerelease: true,
+			},
+		});
+		await fs.writeFile(testFile, content, 'utf-8');
+
+		await expect(readGlobalJson(testFile)).rejects.toThrow(
+			"Invalid version format in global.json: '8.0.100 preview'",
+		);
+	});
+
+	it('should handle allowPrerelease flag with stable version', async () => {
 		const content = JSON.stringify({
 			sdk: {
 				version: '8.0.100',
@@ -261,6 +275,99 @@ describe('readGlobalJson', () => {
 
 		const version = await readGlobalJson(testFile);
 		expect(version).toBe('8.0.100');
+	});
+
+	it('should accept preview version when allowPrerelease is true', async () => {
+		const content = JSON.stringify({
+			sdk: {
+				version: '9.0.100-preview.7',
+				allowPrerelease: true,
+			},
+		});
+		await fs.writeFile(testFile, content, 'utf-8');
+
+		const version = await readGlobalJson(testFile);
+		expect(version).toBe('9.0.100-preview.7');
+	});
+
+	it('should accept preview version with complex prerelease suffix', async () => {
+		const content = JSON.stringify({
+			sdk: {
+				version: '9.0.100-preview.7.24407.12',
+				allowPrerelease: true,
+			},
+		});
+		await fs.writeFile(testFile, content, 'utf-8');
+
+		const version = await readGlobalJson(testFile);
+		expect(version).toBe('9.0.100-preview.7.24407.12');
+	});
+
+	it('should reject preview version when allowPrerelease is false', async () => {
+		const content = JSON.stringify({
+			sdk: {
+				version: '9.0.100-preview.7',
+				allowPrerelease: false,
+			},
+		});
+		await fs.writeFile(testFile, content, 'utf-8');
+
+		await expect(readGlobalJson(testFile)).rejects.toThrow(
+			"Preview version '9.0.100-preview.7' specified in global.json, but 'allowPrerelease' is not set to true",
+		);
+	});
+
+	it('should reject preview version when allowPrerelease is not specified', async () => {
+		const content = JSON.stringify({
+			sdk: {
+				version: '9.0.100-preview.7',
+			},
+		});
+		await fs.writeFile(testFile, content, 'utf-8');
+
+		await expect(readGlobalJson(testFile)).rejects.toThrow(
+			"Preview version '9.0.100-preview.7' specified in global.json, but 'allowPrerelease' is not set to true",
+		);
+	});
+
+	it('should accept rc versions when allowPrerelease is true', async () => {
+		const content = JSON.stringify({
+			sdk: {
+				version: '9.0.100-rc.2',
+				allowPrerelease: true,
+			},
+		});
+		await fs.writeFile(testFile, content, 'utf-8');
+
+		const version = await readGlobalJson(testFile);
+		expect(version).toBe('9.0.100-rc.2');
+	});
+
+	it('should accept alpha/beta versions when allowPrerelease is true', async () => {
+		const content = JSON.stringify({
+			sdk: {
+				version: '9.0.100-alpha.1',
+				allowPrerelease: true,
+			},
+		});
+		await fs.writeFile(testFile, content, 'utf-8');
+
+		const version = await readGlobalJson(testFile);
+		expect(version).toBe('9.0.100-alpha.1');
+	});
+
+	it('should apply rollForward: latestMajor with allowPrerelease flag', async () => {
+		const content = JSON.stringify({
+			sdk: {
+				version: '9.0.0',
+				rollForward: 'latestMajor',
+				allowPrerelease: true,
+			},
+		});
+		await fs.writeFile(testFile, content, 'utf-8');
+
+		const version = await readGlobalJson(testFile);
+		expect(version).toBe('x.x.x');
 	});
 });
 
@@ -288,5 +395,142 @@ describe('getDefaultGlobalJsonPath', () => {
 
 		const result = getDefaultGlobalJsonPath();
 		expect(result).toBe(path.join(process.cwd(), 'global.json'));
+	});
+});
+
+describe('JSON Comment Support', () => {
+	const testDir = path.join(__dirname, '__test_comments__');
+	const testFile = path.join(testDir, 'global.json');
+
+	beforeEach(async () => {
+		await fs.mkdir(testDir, { recursive: true });
+	});
+
+	afterEach(async () => {
+		await fs.rm(testDir, { recursive: true, force: true });
+	});
+
+	it('should parse JSON with single-line comments', async () => {
+		const content = `{
+			// This is a comment
+			"sdk": {
+				"version": "8.0.100" // inline comment
+			}
+		}`;
+		await fs.writeFile(testFile, content, 'utf-8');
+
+		const version = await readGlobalJson(testFile);
+		expect(version).toBe('8.0.100');
+	});
+
+	it('should parse JSON with multi-line comments', async () => {
+		const content = `{
+			/* This is a
+			   multi-line comment */
+			"sdk": {
+				"version": "8.0.100"
+			}
+		}`;
+		await fs.writeFile(testFile, content, 'utf-8');
+
+		const version = await readGlobalJson(testFile);
+		expect(version).toBe('8.0.100');
+	});
+
+	it('should parse JSON with mixed comment styles', async () => {
+		const content = `{
+			// Single-line comment
+			/* Multi-line
+			   comment */
+			"sdk": {
+				"version": "9.0.200", // End of line comment
+				/* Another block comment */ "rollForward": "latestPatch"
+			}
+		}`;
+		await fs.writeFile(testFile, content, 'utf-8');
+
+		const version = await readGlobalJson(testFile);
+		expect(version).toBe('9.0.x');
+	});
+
+	it('should handle comments at various positions', async () => {
+		const content = `// Top comment
+		{
+			"sdk": { // After opening brace
+				// Before version
+				"version": "7.0.100"
+				// After version
+			} // Before closing brace
+		}
+		// Bottom comment`;
+		await fs.writeFile(testFile, content, 'utf-8');
+
+		const version = await readGlobalJson(testFile);
+		expect(version).toBe('7.0.100');
+	});
+
+	it('should ignore commented-out properties', async () => {
+		const content = `{
+			"sdk": {
+				"version": "8.0.100"
+				// "rollForward": "major"
+			}
+		}`;
+		await fs.writeFile(testFile, content, 'utf-8');
+
+		const version = await readGlobalJson(testFile);
+		// No rollForward applied since it's commented out
+		expect(version).toBe('8.0.100');
+	});
+
+	it('should not treat comment-like strings as comments', async () => {
+		const content = `{
+			"sdk": {
+				"version": "8.0.100",
+				"description": "This // is not a comment"
+			}
+		}`;
+		await fs.writeFile(testFile, content, 'utf-8');
+
+		const version = await readGlobalJson(testFile);
+		expect(version).toBe('8.0.100');
+	});
+
+	it('should handle empty comments', async () => {
+		const content = `{
+			//
+			"sdk": {
+				/**/
+				"version": "8.0.100"
+			}
+		}`;
+		await fs.writeFile(testFile, content, 'utf-8');
+
+		const version = await readGlobalJson(testFile);
+		expect(version).toBe('8.0.100');
+	});
+
+	it('should parse complex real-world example with documentation comments', async () => {
+		const content = `{
+			// .NET SDK Configuration
+			// This controls which SDK version is used for builds
+			"sdk": {
+				// Using .NET 9 preview with latest patches
+				"version": "9.0.100-preview.7",
+				
+				// Allow preview/prerelease versions
+				"allowPrerelease": true,
+				
+				/* Roll forward policy:
+				 * - latestPatch: Use newest patch within same feature band
+				 * - Ensures we get security updates automatically
+				 */
+				"rollForward": "latestPatch"
+			}
+		}`;
+		await fs.writeFile(testFile, content, 'utf-8');
+
+		const version = await readGlobalJson(testFile);
+		expect(version).toBe('9.0.x');
 	});
 });

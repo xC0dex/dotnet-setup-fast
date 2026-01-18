@@ -22,6 +22,20 @@ describe('getDotNetDownloadUrl', () => {
 			/^https:\/\/builds\.dotnet\.microsoft\.com\/dotnet\/aspnetcore\/Runtime\/8\.0\.0\/aspnetcore-runtime-8\.0\.0-(linux|osx|win)-(x64|arm64|arm)\.(tar\.gz|zip)$/,
 		);
 	});
+
+	it('should generate correct SDK URL for preview version', () => {
+		const url = getDotNetDownloadUrl('9.0.100-preview.7.24407.12', 'sdk');
+		expect(url).toMatch(
+			/^https:\/\/builds\.dotnet\.microsoft\.com\/dotnet\/Sdk\/9\.0\.100-preview\.7\.24407\.12\/dotnet-sdk-9\.0\.100-preview\.7\.24407\.12-(linux|osx|win)-(x64|arm64|arm)\.(tar\.gz|zip)$/,
+		);
+	});
+
+	it('should generate correct Runtime URL for rc version', () => {
+		const url = getDotNetDownloadUrl('9.0.0-rc.2', 'runtime');
+		expect(url).toMatch(
+			/^https:\/\/builds\.dotnet\.microsoft\.com\/dotnet\/Runtime\/9\.0\.0-rc\.2\/dotnet-runtime-9\.0\.0-rc\.2-(linux|osx|win)-(x64|arm64|arm)\.(tar\.gz|zip)$/,
+		);
+	});
 });
 
 describe('getDotNetInstallDirectory', () => {
