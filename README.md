@@ -1,3 +1,71 @@
 # dotnet-setup-fast
 
-A high-performance GitHub Action for downloading .NET SDK and Runtime with parallel downloads, caching, and intelligent version resolution.
+⚡ High-performance GitHub Action for .NET SDK/Runtime installation with parallel downloads, intelligent version resolution, and caching.
+
+## Quick Setup
+
+```yaml
+- uses: fast-actions/setup-dotnet@v1
+  with:
+    dotnet-sdk: '10.x.x'
+```
+
+That's it! The action automatically:
+- Downloads the latest .NET 10 SDK
+- Adds it to PATH
+- Caches for future runs
+
+## Features
+
+- **Flexible Installation** – Install SDK, Runtime, or ASP.NET Core separately or combined
+- **Parallel Downloads** – Multiple versions download simultaneously
+- **Smart Version Resolution** – Wildcards (`10.x.x`), keywords (`latest`, `lts`, `sts`), and `global.json` support
+- **Automatic Caching** – Speeds up subsequent workflow runs dramatically
+- **Intelligent Deduplication** – Skips redundant installations (SDK includes runtimes)
+
+## Common Use Cases
+
+```yaml
+# Use latest LTS SDK
+- uses: fast-actions/setup-dotnet@v1
+  with:
+    dotnet-sdk: 'lts'
+
+# Multi-target testing (latest SDK + multiple runtimes)
+- uses: fast-actions/setup-dotnet@v1
+  with:
+    dotnet-sdk: 'latest'
+    dotnet-runtime: |
+      9.0.0
+      8.0.0
+      7.0.0
+
+# From global.json
+- uses: fast-actions/setup-dotnet@v1
+```
+
+## Documentation
+
+For detailed documentation, advanced features, and more examples, see [docs/guide.md](docs/guide.md).
+
+## Inputs
+
+| Input | Description | Required | Default |
+|-------|-------------|----------|---------|
+| `dotnet-sdk` | SDK version(s). Supports wildcards, keywords (`latest`, `lts`, `sts`), comma-separated, or YAML array. | No | – |
+| `dotnet-runtime` | Runtime version(s). Same format as `dotnet-sdk`. | No | – |
+| `dotnet-aspnetcore` | ASP.NET Core Runtime version(s). Same format as `dotnet-sdk`. | No | – |
+| `global-json` | Path to `global.json` for SDK resolution. | No | `./global.json` |
+| `cache` | Enable caching of .NET installations. | No | `true` |
+
+## Outputs
+
+| Output | Description |
+|--------|-------------|
+| `dotnet-version` | Installed .NET versions (e.g., `sdk:9.0.100, runtime:8.0.0`) |
+| `dotnet-path` | Path to .NET installation directory |
+| `cache-hit` | Whether installation was restored from cache (`true`/`false`) |
+
+## License
+
+MIT – see [LICENSE](LICENSE)
