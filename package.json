@@ -15,7 +15,7 @@
 	"license": "MIT",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/xC0dex/dotnet-setup-fast"
+		"url": "https://github.com/fast-actions/setup-dotnet"
 	},
 	"packageManager": "pnpm@10.28.0",
 	"scripts": {
