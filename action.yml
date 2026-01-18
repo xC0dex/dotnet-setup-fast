@@ -1,5 +1,5 @@
 name: 'Setup .NET Fast'
-description: 'Download .NET SDK and Runtime with optimized performance'
+description: 'High-performance GitHub Action for .NET SDK/Runtime installation with parallel downloads, intelligent version resolution, and caching'
 author: '@xC0dex'
 
 branding:
