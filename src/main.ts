@@ -52,7 +52,7 @@ function formatVersionPlan(deduplicated: VersionSet): string {
 function setActionOutputs(
 	versions: string,
 	installDir: string,
-	cacheHit: string,
+	cacheHit: boolean,
 ): void {
 	core.setOutput('dotnet-version', versions);
 	core.setOutput('dotnet-path', installDir);
@@ -84,7 +84,7 @@ async function tryRestoreFromCache(deduplicated: VersionSet): Promise<boolean> {
 			...deduplicated.aspnetcore.map((v) => `aspnetcore:${v}`),
 		].join(', ');
 
-		setActionOutputs(versions, installDir, 'true');
+		setActionOutputs(versions, installDir, true);
 		core.info('✅ Installation complete (from cache)');
 		return true;
 	}
@@ -198,7 +198,7 @@ function setOutputsFromInstallations(
 		.join(', ');
 	const paths = installations.map((i) => i.path).join(':');
 
-	setActionOutputs(versions, paths, String(cacheHit));
+	setActionOutputs(versions, paths, cacheHit);
 }
 
 /**
