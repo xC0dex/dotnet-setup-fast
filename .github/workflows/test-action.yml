@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - ".github/workflows/test-action.yml"
+      - "dist/index.js"
 
 permissions:
   contents: read
