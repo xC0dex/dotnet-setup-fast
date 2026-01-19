@@ -197,7 +197,6 @@ jobs:
 
       - name: Verify .NET installation
         run: |
-          dotnet --version
           dotnet --list-sdks
           dotnet --list-runtimes
 
@@ -240,7 +239,6 @@ jobs:
 
       - name: Verify SDK installation
         run: |
-          dotnet --version
           dotnet --list-sdks
 
       - name: Check outputs
@@ -272,7 +270,6 @@ jobs:
 
       - name: Verify installation
         run: |
-          dotnet --version
           dotnet --list-sdks
           dotnet --list-runtimes
 
@@ -323,9 +320,6 @@ jobs:
 
       - name: Verify installation
         run: |
-          echo "=== Installed .NET Version ==="
-          dotnet --version
-          echo ""
           echo "=== All SDKs ==="
           dotnet --list-sdks
           echo ""
@@ -423,9 +417,7 @@ jobs:
 
       - name: Verify installation
         run: |
-          echo "=== Installed .NET Version ==="
-          dotnet --version
-          echo ""
+
           echo "=== All SDKs ==="
           dotnet --list-sdks
           echo ""
@@ -486,7 +478,6 @@ jobs:
 
       - name: Verify installation
         run: |
-          dotnet --version
           dotnet --list-sdks
           dotnet --list-runtimes
 
