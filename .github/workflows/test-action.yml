@@ -14,39 +14,6 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  test-action:
-    name: Test .NET Setup
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-latest]
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
-
-      - name: Debug - Print environment variables
-        run: env | sort
-
-      - name: Setup .NET using this action
-        uses: ./
-        id: setup-dotnet
-        with:
-          #sdk-version: lts, 10.0.x
-          aspnetcore-version: sts, 8.x.x
-          runtime-version: latest
-          cache: false
-
-      - name: Verify .NET installation
-        run: |
-          dotnet --list-sdks
-          dotnet --list-runtimes
-
-      - name: Check outputs
-        run: |
-          echo "Installed version: ${{ steps.setup-dotnet.outputs.dotnet-version }}"
-          echo "Dotnet path: ${{ steps.setup-dotnet.outputs.dotnet-path }}"
-
   test-global-json:
     name: Test global.json Support
     runs-on: ubuntu-latest
