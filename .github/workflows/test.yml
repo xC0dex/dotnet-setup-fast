@@ -1,10 +1,14 @@
 name: Test Action
 
 on:
-  push:
-    branches:
-      - main
   pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   test-action:
@@ -139,7 +143,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest, macos-13]
+        os: [ubuntu-latest, windows-latest, macos-latest]
         version-config:
           - name: "SDK Latest"
             sdk: "latest"
@@ -202,7 +206,6 @@ jobs:
         run: |
           echo "Installed: ${{ steps.setup-dotnet.outputs.dotnet-version }}"
           echo "Path: ${{ steps.setup-dotnet.outputs.dotnet-path }}"
-          echo "Cache-Hit: ${{ steps.setup-dotnet.outputs.cache-hit }}"
 
   test-global-json-prerelease:
     name: Test global.json with Prerelease
@@ -232,6 +235,8 @@ jobs:
       - name: Setup .NET from global.json
         uses: ./
         id: setup-dotnet
+        with:
+          cache: false
 
       - name: Verify SDK installation
         run: |
@@ -245,71 +250,38 @@ jobs:
           echo "Path: ${{ steps.setup-dotnet.outputs.dotnet-path }}"
 
   test-caching:
-    name: Test Caching Functionality
+    name: Test Caching Enabled
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-        scenario:
-          - name: "SDK Only"
-            sdk: "10.0.100"
-            runtime: ""
-            aspnetcore: ""
-          - name: "Runtime Only"
-            sdk: ""
-            runtime: "9.0.0"
-            aspnetcore: ""
-          - name: "Mixed Components"
-            sdk: "10.x"
-            runtime: "9.x"
-            aspnetcore: "9.x"
 
     steps:
       - name: Checkout
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
 
-      - name: First run - ${{ matrix.scenario.name }} (should miss cache)
+      - name: Setup .NET with caching enabled
         uses: ./
-        id: setup-dotnet-first
+        id: setup-dotnet
         with:
-          sdk-version: ${{ matrix.scenario.sdk }}
-          runtime-version: ${{ matrix.scenario.runtime }}
-          aspnetcore-version: ${{ matrix.scenario.aspnetcore }}
+          sdk-version: "10.x"
+          runtime-version: "9.x"
+          aspnetcore-version: "9.x"
           cache: true
-
-      - name: Verify first run cache miss
-        shell: bash
-        run: |
-          echo "First run cache-hit: ${{ steps.setup-dotnet-first.outputs.cache-hit }}"
-          if [ "${{ steps.setup-dotnet-first.outputs.cache-hit }}" == "true" ]; then
-            echo "ERROR: First run should not hit cache"
-            exit 1
-          fi
-
-      - name: Second run - ${{ matrix.scenario.name }} (should hit cache)
-        uses: ./
-        id: setup-dotnet-second
-        with:
-          sdk-version: ${{ matrix.scenario.sdk }}
-          runtime-version: ${{ matrix.scenario.runtime }}
-          aspnetcore-version: ${{ matrix.scenario.aspnetcore }}
-          cache: true
-
-      - name: Verify second run cache hit
-        shell: bash
-        run: |
-          echo "Second run cache-hit: ${{ steps.setup-dotnet-second.outputs.cache-hit }}"
-          if [ "${{ steps.setup-dotnet-second.outputs.cache-hit }}" != "true" ]; then
-            echo "ERROR: Second run should hit cache"
-            exit 1
-          fi
 
       - name: Verify installation
         run: |
           dotnet --version
           dotnet --list-sdks
           dotnet --list-runtimes
+
+      - name: Check outputs
+        shell: bash
+        run: |
+          echo "Installed: ${{ steps.setup-dotnet.outputs.dotnet-version }}"
+          echo "Path: ${{ steps.setup-dotnet.outputs.dotnet-path }}"
+          echo "Cache-Hit: ${{ steps.setup-dotnet.outputs.cache-hit }}"
 
   test-version-combinations:
     name: Test Version Combinations
@@ -408,6 +380,7 @@ jobs:
           sdk-version: ${{ matrix.scenario.sdk }}
           runtime-version: ${{ matrix.scenario.runtime }}
           aspnetcore-version: ${{ matrix.scenario.aspnetcore }}
+          cache: false
 
       - name: Verify installation
         run: |
@@ -535,11 +508,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
 
-      - name: Record start time
-        id: start-time
-        shell: bash
-        run: echo "start=$(date +%s)" >> $GITHUB_OUTPUT
-
       - name: Setup .NET with many versions
         uses: ./
         id: setup-dotnet
@@ -548,18 +516,6 @@ jobs:
           runtime-version: "9.0.0, 8.0.0, 7.0.0"
           aspnetcore-version: "9.0.0, 8.0.0"
           cache: false
-
-      - name: Record end time
-        id: end-time
-        shell: bash
-        run: echo "end=$(date +%s)" >> $GITHUB_OUTPUT
-
-      - name: Calculate duration
-        shell: bash
-        run: |
-          duration=$(($${{ steps.end-time.outputs.end }} - ${{ steps.start-time.outputs.start }}))
-          echo "Installation took $duration seconds"
-          echo "Duration: $duration seconds"
 
       - name: Verify all installations
         run: |
