@@ -16,6 +16,10 @@
 		{
 			"matchDepTypes": ["uses-with"],
 			"enabled": false
+		},
+		{
+			"matchDatasources": ["npm"],
+			"minimumReleaseAge": "3 days"
 		}
 	]
 }
