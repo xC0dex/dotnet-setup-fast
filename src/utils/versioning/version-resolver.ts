@@ -78,6 +78,20 @@ export async function fetchAndCacheReleaseInfo(
 }
 
 /**
+ * Format type label for display in logs
+ */
+function formatTypeLabel(type: DotnetType): string {
+	switch (type) {
+		case 'sdk':
+			return 'SDK';
+		case 'runtime':
+			return 'Runtime';
+		case 'aspnetcore':
+			return 'ASP.NET Core';
+	}
+}
+
+/**
  * Normalize version pattern to 3-part format
  * Examples: 10.x -> 10.x.x, 10.0 -> 10.0.x
  */
@@ -98,8 +112,7 @@ export function resolveVersion(version: string, type: DotnetType): string {
 
 	// If version has no wildcards or keywords, return as-is
 	if (
-		!version.includes('x') &&
-		!version.includes('X') &&
+		!versionLower.includes('x') &&
 		versionLower !== 'lts' &&
 		versionLower !== 'sts' &&
 		versionLower !== 'latest'
@@ -115,17 +128,25 @@ export function resolveVersion(version: string, type: DotnetType): string {
 			versionLower,
 			type,
 		);
-		core.info(`Resolved ${versionLower.toUpperCase()} -> ${resolved.value}`);
+		const typeLabel = formatTypeLabel(type);
+		core.info(
+			`Resolved ${versionLower.toUpperCase()} (${typeLabel}) -> ${resolved.value}`,
+		);
 		return resolved.value;
 	}
 
 	if (versionLower === 'latest') {
 		const resolved = resolveLatestFromReleases(releases, type);
-		core.info(`Resolved LATEST -> ${resolved.value}`);
+		const typeLabel = formatTypeLabel(type);
+		core.info(`Resolved LATEST (${typeLabel}) -> ${resolved.value}`);
 		return resolved.value;
 	}
 
-	const resolved = resolveVersionPatternFromReleases(releases, version, type);
+	const resolved = resolveVersionPatternFromReleases(
+		releases,
+		versionLower,
+		type,
+	);
 	core.debug(`Resolved ${version} -> ${resolved}`);
 	return resolved;
 }
@@ -202,7 +223,7 @@ function resolveVersionPatternFromReleases(
 	const normalizedVersion = normalizeVersionPattern(version);
 	const versionPattern = normalizedVersion
 		.replace(/\./g, '\\.')
-		.replace(/[xX]/g, '\\d+');
+		.replace(/[x]/g, '\\d+');
 	const regex = new RegExp(`^${versionPattern}$`);
 
 	const versionType = type === 'sdk' ? 'sdk' : 'runtime';
