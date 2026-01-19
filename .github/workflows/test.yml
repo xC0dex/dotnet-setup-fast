@@ -131,4 +131,456 @@ jobs:
         run: |
           echo "Installed: ${{ steps.setup-dotnet.outputs.dotnet-version }}"
           echo "Path: ${{ steps.setup-dotnet.outputs.dotnet-path }}"
-          echo "Cache-Hit: ${{ steps.setup-dotnet.outputs.cache-hit }}" 
+          echo "Cache-Hit: ${{ steps.setup-dotnet.outputs.cache-hit }}"
+
+  test-multi-os-basic:
+    name: Test Multi-OS Basic Installation
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest, macos-13]
+        version-config:
+          - name: "SDK Latest"
+            sdk: "latest"
+            runtime: ""
+            aspnetcore: ""
+          - name: "SDK LTS"
+            sdk: "lts"
+            runtime: ""
+            aspnetcore: ""
+          - name: "SDK STS"
+            sdk: "sts"
+            runtime: ""
+            aspnetcore: ""
+          - name: "Runtime Latest"
+            sdk: ""
+            runtime: "latest"
+            aspnetcore: ""
+          - name: "Runtime LTS"
+            sdk: ""
+            runtime: "lts"
+            aspnetcore: ""
+          - name: "Runtime STS"
+            sdk: ""
+            runtime: "sts"
+            aspnetcore: ""
+          - name: "ASP.NET Core Latest"
+            sdk: ""
+            runtime: ""
+            aspnetcore: "latest"
+          - name: "ASP.NET Core LTS"
+            sdk: ""
+            runtime: ""
+            aspnetcore: "lts"
+          - name: "ASP.NET Core STS"
+            sdk: ""
+            runtime: ""
+            aspnetcore: "sts"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
+
+      - name: Setup .NET - ${{ matrix.version-config.name }}
+        uses: ./
+        id: setup-dotnet
+        with:
+          sdk-version: ${{ matrix.version-config.sdk }}
+          runtime-version: ${{ matrix.version-config.runtime }}
+          aspnetcore-version: ${{ matrix.version-config.aspnetcore }}
+          cache: false
+
+      - name: Verify .NET installation
+        run: |
+          dotnet --version
+          dotnet --list-sdks
+          dotnet --list-runtimes
+
+      - name: Check outputs
+        shell: bash
+        run: |
+          echo "Installed: ${{ steps.setup-dotnet.outputs.dotnet-version }}"
+          echo "Path: ${{ steps.setup-dotnet.outputs.dotnet-path }}"
+          echo "Cache-Hit: ${{ steps.setup-dotnet.outputs.cache-hit }}"
+
+  test-global-json-prerelease:
+    name: Test global.json with Prerelease
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        sample:
+          - name: "Preview with allowPrerelease"
+            file: "global.json.preview"
+          - name: "Preview with Latest Major"
+            file: "global.json.preview-latestmajor"
+          - name: "With Comments"
+            file: "global.json.with-comments"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
+
+      - name: Setup test environment with global.json
+        shell: bash
+        run: |
+          cp samples/${{ matrix.sample.file }} global.json
+          cat global.json
+
+      - name: Setup .NET from global.json
+        uses: ./
+        id: setup-dotnet
+
+      - name: Verify SDK installation
+        run: |
+          dotnet --version
+          dotnet --list-sdks
+
+      - name: Check outputs
+        shell: bash
+        run: |
+          echo "Installed: ${{ steps.setup-dotnet.outputs.dotnet-version }}"
+          echo "Path: ${{ steps.setup-dotnet.outputs.dotnet-path }}"
+
+  test-caching:
+    name: Test Caching Functionality
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        scenario:
+          - name: "SDK Only"
+            sdk: "10.0.100"
+            runtime: ""
+            aspnetcore: ""
+          - name: "Runtime Only"
+            sdk: ""
+            runtime: "9.0.0"
+            aspnetcore: ""
+          - name: "Mixed Components"
+            sdk: "10.x"
+            runtime: "9.x"
+            aspnetcore: "9.x"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
+
+      - name: First run - ${{ matrix.scenario.name }} (should miss cache)
+        uses: ./
+        id: setup-dotnet-first
+        with:
+          sdk-version: ${{ matrix.scenario.sdk }}
+          runtime-version: ${{ matrix.scenario.runtime }}
+          aspnetcore-version: ${{ matrix.scenario.aspnetcore }}
+          cache: true
+
+      - name: Verify first run cache miss
+        shell: bash
+        run: |
+          echo "First run cache-hit: ${{ steps.setup-dotnet-first.outputs.cache-hit }}"
+          if [ "${{ steps.setup-dotnet-first.outputs.cache-hit }}" == "true" ]; then
+            echo "ERROR: First run should not hit cache"
+            exit 1
+          fi
+
+      - name: Second run - ${{ matrix.scenario.name }} (should hit cache)
+        uses: ./
+        id: setup-dotnet-second
+        with:
+          sdk-version: ${{ matrix.scenario.sdk }}
+          runtime-version: ${{ matrix.scenario.runtime }}
+          aspnetcore-version: ${{ matrix.scenario.aspnetcore }}
+          cache: true
+
+      - name: Verify second run cache hit
+        shell: bash
+        run: |
+          echo "Second run cache-hit: ${{ steps.setup-dotnet-second.outputs.cache-hit }}"
+          if [ "${{ steps.setup-dotnet-second.outputs.cache-hit }}" != "true" ]; then
+            echo "ERROR: Second run should hit cache"
+            exit 1
+          fi
+
+      - name: Verify installation
+        run: |
+          dotnet --version
+          dotnet --list-sdks
+          dotnet --list-runtimes
+
+  test-version-combinations:
+    name: Test Version Combinations
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        scenario:
+          - name: "Multiple SDKs"
+            sdk: "10.x.x, 9.0.100"
+            runtime: ""
+            aspnetcore: ""
+          - name: "SDK + Multiple Runtimes"
+            sdk: "latest"
+            runtime: "9.0.0, 8.0.0, 7.0.0"
+            aspnetcore: ""
+          - name: "All Components Mixed"
+            sdk: "lts, sts"
+            runtime: "latest"
+            aspnetcore: "9.x.x, 8.0.0"
+          - name: "Wildcards Mix"
+            sdk: "10.x, 9.x.x"
+            runtime: "9.x, 8.x"
+            aspnetcore: "9.x"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
+
+      - name: Setup .NET - ${{ matrix.scenario.name }}
+        uses: ./
+        id: setup-dotnet
+        with:
+          sdk-version: ${{ matrix.scenario.sdk }}
+          runtime-version: ${{ matrix.scenario.runtime }}
+          aspnetcore-version: ${{ matrix.scenario.aspnetcore }}
+          cache: false
+
+      - name: Verify installation
+        run: |
+          echo "=== Installed .NET Version ==="
+          dotnet --version
+          echo ""
+          echo "=== All SDKs ==="
+          dotnet --list-sdks
+          echo ""
+          echo "=== All Runtimes ==="
+          dotnet --list-runtimes
+
+      - name: Check outputs
+        shell: bash
+        run: |
+          echo "Installed: ${{ steps.setup-dotnet.outputs.dotnet-version }}"
+          echo "Path: ${{ steps.setup-dotnet.outputs.dotnet-path }}"
+
+  test-global-json-override:
+    name: Test global.json Override
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        scenario:
+          - name: "Input SDK overrides global.json"
+            global-json-file: "global.json.exact"
+            sdk: "9.x"
+            runtime: ""
+            aspnetcore: ""
+          - name: "Input SDK + Runtime with global.json"
+            global-json-file: "global.json.feature"
+            sdk: "10.x"
+            runtime: "9.0.0"
+            aspnetcore: ""
+          - name: "Input SDK + ASP.NET Core with global.json"
+            global-json-file: "global.json.patch"
+            sdk: "lts"
+            runtime: ""
+            aspnetcore: "9.x"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
+
+      - name: Setup test environment with global.json
+        shell: bash
+        run: |
+          cp samples/${{ matrix.scenario.global-json-file }} global.json
+          echo "=== global.json content ==="
+          cat global.json
+
+      - name: Setup .NET - ${{ matrix.scenario.name }}
+        uses: ./
+        id: setup-dotnet
+        with:
+          sdk-version: ${{ matrix.scenario.sdk }}
+          runtime-version: ${{ matrix.scenario.runtime }}
+          aspnetcore-version: ${{ matrix.scenario.aspnetcore }}
+
+      - name: Verify installation
+        run: |
+          dotnet --version
+          dotnet --list-sdks
+          dotnet --list-runtimes
+
+      - name: Check outputs
+        shell: bash
+        run: |
+          echo "Installed: ${{ steps.setup-dotnet.outputs.dotnet-version }}"
+          echo "Path: ${{ steps.setup-dotnet.outputs.dotnet-path }}"
+
+  test-yaml-array-inputs:
+    name: Test YAML Array Inputs
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
+
+      - name: Setup .NET with YAML array syntax
+        uses: ./
+        id: setup-dotnet
+        with:
+          sdk-version: |
+            10.x.x
+            9.0.100
+          runtime-version: |
+            9.0.0
+            8.0.0
+          aspnetcore-version: |
+            9.x
+            8.0.0
+          cache: false
+
+      - name: Verify installation
+        run: |
+          echo "=== Installed .NET Version ==="
+          dotnet --version
+          echo ""
+          echo "=== All SDKs ==="
+          dotnet --list-sdks
+          echo ""
+          echo "=== All Runtimes ==="
+          dotnet --list-runtimes
+
+      - name: Check outputs
+        shell: bash
+        run: |
+          echo "Installed: ${{ steps.setup-dotnet.outputs.dotnet-version }}"
+          echo "Path: ${{ steps.setup-dotnet.outputs.dotnet-path }}"
+
+  test-edge-cases:
+    name: Test Edge Cases
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        scenario:
+          - name: "Only cache with global.json"
+            global-json-file: "global.json.exact"
+            sdk: ""
+            runtime: ""
+            aspnetcore: ""
+            cache: "true"
+          - name: "Duplicate versions in input"
+            global-json-file: ""
+            sdk: "10.x, 10.x.x, latest"
+            runtime: ""
+            aspnetcore: ""
+            cache: "false"
+          - name: "Mixed keywords and versions"
+            global-json-file: ""
+            sdk: "lts, 9.0.100, sts"
+            runtime: "latest, 8.0.0"
+            aspnetcore: "9.x, sts"
+            cache: "false"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
+
+      - name: Setup global.json if needed
+        if: matrix.scenario.global-json-file != ''
+        run: |
+          cp samples/${{ matrix.scenario.global-json-file }} global.json
+          echo "=== global.json content ==="
+          cat global.json
+
+      - name: Setup .NET - ${{ matrix.scenario.name }}
+        uses: ./
+        id: setup-dotnet
+        with:
+          sdk-version: ${{ matrix.scenario.sdk }}
+          runtime-version: ${{ matrix.scenario.runtime }}
+          aspnetcore-version: ${{ matrix.scenario.aspnetcore }}
+          cache: ${{ matrix.scenario.cache }}
+
+      - name: Verify installation
+        run: |
+          dotnet --version
+          dotnet --list-sdks
+          dotnet --list-runtimes
+
+      - name: Check outputs
+        run: |
+          echo "Installed: ${{ steps.setup-dotnet.outputs.dotnet-version }}"
+          echo "Path: ${{ steps.setup-dotnet.outputs.dotnet-path }}"
+          echo "Cache-Hit: ${{ steps.setup-dotnet.outputs.cache-hit }}"
+
+  test-performance:
+    name: Test Performance & Parallel Downloads
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
+
+      - name: Record start time
+        id: start-time
+        shell: bash
+        run: echo "start=$(date +%s)" >> $GITHUB_OUTPUT
+
+      - name: Setup .NET with many versions
+        uses: ./
+        id: setup-dotnet
+        with:
+          sdk-version: "10.x, 9.x, 8.x"
+          runtime-version: "9.0.0, 8.0.0, 7.0.0"
+          aspnetcore-version: "9.0.0, 8.0.0"
+          cache: false
+
+      - name: Record end time
+        id: end-time
+        shell: bash
+        run: echo "end=$(date +%s)" >> $GITHUB_OUTPUT
+
+      - name: Calculate duration
+        shell: bash
+        run: |
+          duration=$(($${{ steps.end-time.outputs.end }} - ${{ steps.start-time.outputs.start }}))
+          echo "Installation took $duration seconds"
+          echo "Duration: $duration seconds"
+
+      - name: Verify all installations
+        run: |
+          echo "=== Installed .NET Version ==="
+          dotnet --version
+          echo ""
+          echo "=== All SDKs ==="
+          dotnet --list-sdks
+          echo ""
+          echo "=== All Runtimes ==="
+          dotnet --list-runtimes
+
+      - name: Check outputs
+        shell: bash
+        run: |
+          echo "Installed: ${{ steps.setup-dotnet.outputs.dotnet-version }}"
+          echo "Path: ${{ steps.setup-dotnet.outputs.dotnet-path }}"
+
+      - name: Test functionality
+        shell: bash
+        run: |
+          dotnet new console -n TestApp
+          cd TestApp
+          dotnet run
