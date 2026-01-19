@@ -47,6 +47,19 @@ function formatVersionPlan(deduplicated: VersionSet): string {
 }
 
 /**
+ * Set GitHub Action outputs
+ */
+function setActionOutputs(
+	versions: string,
+	installDir: string,
+	cacheHit: boolean,
+): void {
+	core.setOutput('dotnet-version', versions);
+	core.setOutput('dotnet-path', installDir);
+	core.setOutput('cache-hit', cacheHit);
+}
+
+/**
  * Try to restore .NET installations from cache
  * @returns true if cache was restored successfully, false otherwise
  */
@@ -71,9 +84,7 @@ async function tryRestoreFromCache(deduplicated: VersionSet): Promise<boolean> {
 			...deduplicated.aspnetcore.map((v) => `aspnetcore:${v}`),
 		].join(', ');
 
-		core.setOutput('dotnet-version', versions);
-		core.setOutput('dotnet-path', installDir);
-		core.setOutput('cache-hit', 'true');
+		setActionOutputs(versions, installDir, true);
 		core.info('✅ Installation complete (from cache)');
 		return true;
 	}
@@ -101,7 +112,6 @@ function readInputs(): ActionInputs {
 
 async function resolveSdkVersions(inputs: ActionInputs): Promise<string[]> {
 	if (inputs.sdkInput) {
-		core.info('Using SDK versions from action input');
 		return parseVersions(inputs.sdkInput);
 	}
 
@@ -141,16 +151,6 @@ function ensureRequestedVersions(versionSet: VersionSet): void {
 			'At least one of sdk-version, runtime-version, or aspnetcore-version must be specified',
 		);
 	}
-}
-
-async function handleCacheRestore(
-	deduplicated: VersionSet,
-	cacheEnabled: boolean,
-): Promise<boolean> {
-	if (!cacheEnabled) {
-		return false;
-	}
-	return tryRestoreFromCache(deduplicated);
 }
 
 function buildInstallPlan(deduplicated: VersionSet): InstallPlanItem[] {
@@ -198,9 +198,7 @@ function setOutputsFromInstallations(
 		.join(', ');
 	const paths = installations.map((i) => i.path).join(':');
 
-	core.setOutput('dotnet-version', versions);
-	core.setOutput('dotnet-path', paths);
-	core.setOutput('cache-hit', cacheHit);
+	setActionOutputs(versions, paths, cacheHit);
 }
 
 /**
@@ -218,7 +216,7 @@ export async function run(): Promise<void> {
 		const deduplicated = await deduplicateVersions(requestedVersions);
 
 		// Try to restore from cache if enabled
-		if (await handleCacheRestore(deduplicated, inputs.cacheEnabled)) {
+		if (inputs.cacheEnabled && (await tryRestoreFromCache(deduplicated))) {
 			return;
 		}
 
