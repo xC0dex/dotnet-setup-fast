@@ -6,15 +6,16 @@ GitHub Action for .NET SDK/Runtime installation with caching. TypeScript + Vite 
 ## Architecture
 - [src/main.ts](../src/main.ts) - Entry point, orchestrates installer and global.json reading
 - [src/installer.ts](../src/installer.ts) - .NET download/installation via `@actions/tool-cache`
+- [src/types.ts](../src/types.ts) - Shared type definitions
 - [src/utils/global-json-reader.ts](../src/utils/global-json-reader.ts) - Reads and parses global.json for SDK version resolution
 - [src/utils/input-parser.ts](../src/utils/input-parser.ts) - Parses version inputs (comma-separated, multiline)
-- [src/utils/version-resolver.ts](../src/utils/version-resolver.ts) - Version wildcard resolution and semver comparison
-- [src/utils/version-deduplicator.ts](../src/utils/version-deduplicator.ts) - Removes redundant SDK/Runtime installations
-- [src/utils/sdk-runtime-mapper.ts](../src/utils/sdk-runtime-mapper.ts) - Maps SDK versions to included runtimes
 - [src/utils/platform-utils.ts](../src/utils/platform-utils.ts) - Platform and architecture detection
 - [src/utils/archive-utils.ts](../src/utils/archive-utils.ts) - Archive extraction utilities
 - [src/utils/cache-utils.ts](../src/utils/cache-utils.ts) - Cache key generation and cache restore/save operations
-- [action.yml](../action.yml) - GitHub Action inputs: `sdk-version`, `runtime-version`, `aspnetcore-version`, `global-json`, `cache`; outputs: `dotnet-version`, `dotnet-path`
+- [src/utils/versioning/version-resolver.ts](../src/utils/versioning/version-resolver.ts) - Version wildcard resolution, keyword support (lts, sts, latest), and semver comparison
+- [src/utils/versioning/version-deduplicator.ts](../src/utils/versioning/version-deduplicator.ts) - Removes redundant SDK/Runtime installations using SDK/Runtime mapping
+- [src/utils/versioning/sdk-runtime-mapper.ts](../src/utils/versioning/sdk-runtime-mapper.ts) - Maps SDK versions to included runtimes to prevent duplicate installations
+- [action.yml](../action.yml) - GitHub Action inputs: `sdk-version`, `runtime-version`, `aspnetcore-version`, `global-json`, `cache`; outputs: `dotnet-version`, `dotnet-path`, `cache-hit`
 
 ## Build System
 **Critical**: Vite bundles all deps into single `dist/index.js` for GitHub Actions.
@@ -49,6 +50,7 @@ describe('functionName', () => {
 
 ## Code Style
 - **Tabs** (not spaces), **single quotes**, LF line endings
+- **Variable names must always be written out in full** - no abbreviations (e.g., `versionNumber` not `versionNum`, `installationDirectory` not `instDir`, `platform` not `plat`)
 - Biome auto-organizes imports on save
 - Write clean, modular, maintainable code
 - **Never use `any` or `unknown`** - always provide explicit types
