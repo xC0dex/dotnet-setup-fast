@@ -8,7 +8,7 @@ import {
 } from './utils/global-json-reader';
 import { parseVersions } from './utils/input-parser';
 import { deduplicateVersions } from './utils/versioning/version-deduplicator';
-import { fetchAndCacheReleases } from './utils/versioning/version-resolver';
+import { fetchAndCacheReleaseInfo } from './utils/versioning/version-resolver';
 
 interface InstallationResult {
 	version: string;
@@ -153,16 +153,6 @@ async function handleCacheRestore(
 	return tryRestoreFromCache(deduplicated);
 }
 
-async function handleCacheSave(
-	deduplicated: VersionSet,
-	cacheEnabled: boolean,
-): Promise<void> {
-	if (!cacheEnabled) {
-		return;
-	}
-	await trySaveToCache(deduplicated);
-}
-
 function buildInstallPlan(deduplicated: VersionSet): InstallPlanItem[] {
 	const plan: InstallPlanItem[] = [];
 
@@ -210,7 +200,7 @@ function setOutputsFromInstallations(
 
 	core.setOutput('dotnet-version', versions);
 	core.setOutput('dotnet-path', paths);
-	core.setOutput('cache-hit', cacheHit ? 'true' : 'false');
+	core.setOutput('cache-hit', cacheHit);
 }
 
 /**
@@ -222,7 +212,7 @@ export async function run(): Promise<void> {
 		const requestedVersions = await resolveRequestedVersions(inputs);
 
 		ensureRequestedVersions(requestedVersions);
-		await fetchAndCacheReleases();
+		await fetchAndCacheReleaseInfo();
 
 		// Remove redundant versions
 		const deduplicated = await deduplicateVersions(requestedVersions);
@@ -238,8 +228,9 @@ export async function run(): Promise<void> {
 		const installations = await executeInstallPlan(plan);
 
 		// Save to cache if enabled
-		await handleCacheSave(deduplicated, inputs.cacheEnabled);
-
+		if (inputs.cacheEnabled) {
+			await trySaveToCache(deduplicated);
+		}
 		setOutputsFromInstallations(installations, false);
 	} catch (error) {
 		if (error instanceof Error) {

@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
 	compareVersions,
-	fetchAndCacheReleases,
+	fetchAndCacheReleaseInfo,
 	resetCache,
 	resolveVersion,
 	setCachedReleases,
@@ -220,7 +220,7 @@ describe('resolveVersion', () => {
 			json: async () => mockResponse,
 		});
 
-		await fetchAndCacheReleases();
+		await fetchAndCacheReleaseInfo();
 
 		const result = resolveVersion('10.x.x', 'sdk');
 		expect(result).toBe('10.0.402');
@@ -232,7 +232,7 @@ describe('resolveVersion', () => {
 			statusText: 'Not Found',
 		});
 
-		await expect(fetchAndCacheReleases()).rejects.toThrow(
+		await expect(fetchAndCacheReleaseInfo()).rejects.toThrow(
 			'Failed to fetch releases: Not Found',
 		);
 	});
@@ -240,7 +240,7 @@ describe('resolveVersion', () => {
 	it('should throw error when network error occurs', async () => {
 		global.fetch = vi.fn().mockRejectedValue(new Error('Network error'));
 
-		await expect(fetchAndCacheReleases()).rejects.toThrow('Network error');
+		await expect(fetchAndCacheReleaseInfo()).rejects.toThrow('Network error');
 	});
 
 	it('should throw error when API response is malformed', async () => {
@@ -249,7 +249,7 @@ describe('resolveVersion', () => {
 			json: async () => ({}),
 		});
 
-		await expect(fetchAndCacheReleases()).rejects.toThrow(
+		await expect(fetchAndCacheReleaseInfo()).rejects.toThrow(
 			'Invalid API response: releases data is missing or malformed',
 		);
 	});
@@ -260,7 +260,7 @@ describe('resolveVersion', () => {
 			json: async () => ({ releases: null }),
 		});
 
-		await expect(fetchAndCacheReleases()).rejects.toThrow(
+		await expect(fetchAndCacheReleaseInfo()).rejects.toThrow(
 			'Invalid API response: releases data is missing or malformed',
 		);
 	});

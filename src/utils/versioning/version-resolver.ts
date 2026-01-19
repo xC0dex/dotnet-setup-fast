@@ -37,7 +37,7 @@ function getCachedReleasesOrThrow(): ReleaseInfo[] {
  * Initialize the releases cache by fetching from .NET releases API
  * Should be called once at the start before any resolveVersion calls
  */
-export async function fetchAndCacheReleases(): Promise<void> {
+export async function fetchAndCacheReleaseInfo(): Promise<void> {
 	if (cachedReleases) {
 		return;
 	}
