@@ -7,12 +7,10 @@ import * as path from 'node:path';
 import type { DotnetType } from './types';
 import { extractArchive } from './utils/archive-utils';
 import { getArchitecture, getPlatform } from './utils/platform-utils';
+import { fetchReleaseManifest } from './utils/versioning/release-cache';
 
 // Shared installation directory for all .NET installations
 let dotnetInstallDir: string | null = null;
-
-// Cache for releases.json API responses (promise-based for parallel-safe access)
-export const releasesCache = new Map<string, Promise<ReleaseManifest>>();
 
 interface FileInfo {
 	name: string;
@@ -22,13 +20,9 @@ interface FileInfo {
 }
 
 interface ReleaseEntry {
-	sdks?: Array<{ version: string; files: FileInfo[] }>;
-	runtime?: { version: string; files: FileInfo[] };
-	'aspnetcore-runtime'?: { version: string; files: FileInfo[] };
-}
-
-interface ReleaseManifest {
-	releases: ReleaseEntry[];
+	sdks?: Array<{ version: string; files?: FileInfo[] }>;
+	runtime?: { version: string; files?: FileInfo[] };
+	'aspnetcore-runtime'?: { version: string; files?: FileInfo[] };
 }
 
 export interface InstallOptions {
@@ -206,54 +200,6 @@ export async function installDotNet(
 }
 
 /**
- * Fetch releases.json for a specific version channel
- * Uses promise-based caching to prevent concurrent duplicate requests
- */
-async function fetchReleaseManifest(version: string): Promise<ReleaseManifest> {
-	// Extract channel version (e.g., "8.0.100" -> "8.0")
-	const versionParts = version.split('.');
-	if (versionParts.length < 2) {
-		throw new Error(`Invalid version format: ${version}`);
-	}
-	const channel = `${versionParts[0]}.${versionParts[1]}`;
-
-	// Check cache first
-	const cacheKey = channel;
-	const cached = releasesCache.get(cacheKey);
-	if (cached) {
-		return cached;
-	}
-
-	// Create promise and cache it immediately (prevents duplicate requests)
-	const fetchPromise = (async () => {
-		const releasesUrl = `https://builds.dotnet.microsoft.com/dotnet/release-metadata/${channel}/releases.json`;
-		core.debug(`Fetching release manifest: ${releasesUrl}`);
-
-		const response = await fetch(releasesUrl);
-		if (!response.ok) {
-			throw new Error(
-				`Failed to fetch releases for channel ${channel}: ${response.statusText}`,
-			);
-		}
-
-		const data = (await response.json()) as ReleaseManifest;
-		if (!data.releases || !Array.isArray(data.releases)) {
-			throw new Error(
-				`Invalid manifest structure for channel ${channel}: missing releases array`,
-			);
-		}
-
-		core.debug(
-			`Fetched manifest for channel ${channel} with ${data.releases.length} releases`,
-		);
-		return data;
-	})();
-
-	releasesCache.set(cacheKey, fetchPromise);
-	return fetchPromise;
-}
-
-/**
  * Get download URL and hash from releases API
  */
 export async function getDotNetDownloadInfo(
@@ -327,7 +273,7 @@ function getSectionFromRelease(
 	release: ReleaseEntry,
 	version: string,
 	type: DotnetType,
-): { version: string; files: FileInfo[] } | undefined {
+): { version: string; files?: FileInfo[] } | undefined {
 	if (type === 'sdk') {
 		return release.sdks?.find((s) => s.version === version);
 	}

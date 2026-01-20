@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { getDotNetDownloadInfo, releasesCache } from './installer';
+import { getDotNetDownloadInfo } from './installer';
 import * as platformUtils from './utils/platform-utils';
+import { clearReleaseCache } from './utils/versioning/release-cache';
 
 // Mock fetch globally
 global.fetch = vi.fn();
@@ -9,7 +10,7 @@ describe('getDotNetDownloadInfo', () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
 		// Clear releases cache to prevent test interference
-		releasesCache.clear();
+		clearReleaseCache();
 		// Mock platform to linux-x64 for consistent tests
 		vi.spyOn(platformUtils, 'getPlatform').mockReturnValue('linux');
 		vi.spyOn(platformUtils, 'getArchitecture').mockReturnValue('x64');
