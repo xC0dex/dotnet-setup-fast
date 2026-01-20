@@ -1,6 +1,7 @@
 import * as core from '@actions/core';
 import * as io from '@actions/io';
 import * as toolCache from '@actions/tool-cache';
+import * as crypto from 'node:crypto';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import type { DotnetType } from './types';
@@ -9,6 +10,26 @@ import { getArchitecture, getPlatform } from './utils/platform-utils';
 
 // Shared installation directory for all .NET installations
 let dotnetInstallDir: string | null = null;
+
+// Cache for releases.json API responses (promise-based for parallel-safe access)
+export const releasesCache = new Map<string, Promise<ReleaseManifest>>();
+
+interface FileInfo {
+	name: string;
+	rid: string;
+	url: string;
+	hash: string;
+}
+
+interface ReleaseEntry {
+	sdk?: { version: string; files: FileInfo[] };
+	runtime?: { version: string; files: FileInfo[] };
+	'aspnetcore-runtime'?: { version: string; files: FileInfo[] };
+}
+
+interface ReleaseManifest {
+	releases: ReleaseEntry[];
+}
 
 export interface InstallOptions {
 	version: string;
@@ -34,8 +55,36 @@ function validateDownloadedFile(downloadPath: string, prefix: string): void {
 	core.info(`${prefix} Downloaded ${sizeInMB} MB`);
 }
 
+/**
+ * Validate file hash (SHA512)
+ */
+function validateFileHash(
+	filePath: string,
+	expectedHash: string,
+	prefix: string,
+): void {
+	core.debug(`${prefix} Validating hash...`);
+	const fileBuffer = fs.readFileSync(filePath);
+	const actualHash = crypto
+		.createHash('sha512')
+		.update(fileBuffer)
+		.digest('hex')
+		.toLowerCase();
+
+	const expectedHashLower = expectedHash.toLowerCase();
+
+	if (actualHash !== expectedHashLower) {
+		throw new Error(
+			`Hash mismatch! Expected: ${expectedHashLower.substring(0, 16)}..., Got: ${actualHash.substring(0, 16)}... File may be corrupted or tampered.`,
+		);
+	}
+
+	core.debug(`${prefix} Hash validated successfully`);
+}
+
 async function downloadDotnetArchive(
 	downloadUrl: string,
+	expectedHash: string,
 	prefix: string,
 ): Promise<string> {
 	core.debug(`${prefix} Download URL: ${downloadUrl}`);
@@ -43,6 +92,7 @@ async function downloadDotnetArchive(
 	try {
 		const downloadPath = await downloadWithRetry(downloadUrl, 3);
 		validateDownloadedFile(downloadPath, prefix);
+		validateFileHash(downloadPath, expectedHash, prefix);
 		return downloadPath;
 	} catch (error) {
 		const errorMessage = error instanceof Error ? error.message : String(error);
@@ -134,8 +184,8 @@ export async function installDotNet(
 
 	core.info(`${prefix} Installing ${version}`);
 
-	const downloadUrl = getDotNetDownloadUrl(version, type);
-	const downloadPath = await downloadDotnetArchive(downloadUrl, prefix);
+	const { url: downloadUrl, hash } = await getDotNetDownloadInfo(version, type);
+	const downloadPath = await downloadDotnetArchive(downloadUrl, hash, prefix);
 
 	const extractedPath = await extractDotnetArchive(
 		downloadPath,
@@ -156,25 +206,128 @@ export async function installDotNet(
 }
 
 /**
- * Get the download URL for .NET
+ * Fetch releases.json for a specific version channel
+ * Uses promise-based caching to prevent concurrent duplicate requests
  */
-export function getDotNetDownloadUrl(
+async function fetchReleaseManifest(version: string): Promise<ReleaseManifest> {
+	// Extract channel version (e.g., "8.0.100" -> "8.0")
+	const versionParts = version.split('.');
+	if (versionParts.length < 2) {
+		throw new Error(`Invalid version format: ${version}`);
+	}
+	const channel = `${versionParts[0]}.${versionParts[1]}`;
+
+	// Check cache first
+	const cacheKey = channel;
+	const cached = releasesCache.get(cacheKey);
+	if (cached) {
+		return cached;
+	}
+
+	// Create promise and cache it immediately (prevents duplicate requests)
+	const fetchPromise = (async () => {
+		const releasesUrl = `https://builds.dotnet.microsoft.com/dotnet/release-metadata/${channel}/releases.json`;
+		core.debug(`Fetching release manifest: ${releasesUrl}`);
+
+		const response = await fetch(releasesUrl);
+		if (!response.ok) {
+			throw new Error(
+				`Failed to fetch releases for channel ${channel}: ${response.statusText}`,
+			);
+		}
+
+		const data = (await response.json()) as ReleaseManifest;
+		if (!data.releases || !Array.isArray(data.releases)) {
+			throw new Error(
+				`Invalid manifest structure for channel ${channel}: missing releases array`,
+			);
+		}
+
+		core.debug(
+			`Fetched manifest for channel ${channel} with ${data.releases.length} releases`,
+		);
+		return data;
+	})();
+
+	releasesCache.set(cacheKey, fetchPromise);
+	return fetchPromise;
+}
+
+/**
+ * Get download URL and hash from releases API
+ */
+export async function getDotNetDownloadInfo(
 	version: string,
 	type: DotnetType,
-): string {
+): Promise<{ url: string; hash: string }> {
 	const platform = getPlatform();
 	const architecture = getArchitecture();
 	const extension = platform === 'win' ? 'zip' : 'tar.gz';
 
-	if (type === 'aspnetcore') {
-		return `https://builds.dotnet.microsoft.com/dotnet/aspnetcore/Runtime/${version}/aspnetcore-runtime-${version}-${platform}-${architecture}.${extension}`;
+	// Build RID (Runtime Identifier)
+	const rid = `${platform}-${architecture}`;
+
+	// Fetch manifest
+	const manifest = await fetchReleaseManifest(version);
+
+	// Find the release matching our version
+	const release = manifest.releases.find((r) => {
+		if (type === 'sdk') {
+			return r.sdk?.version === version;
+		}
+		if (type === 'aspnetcore') {
+			return r['aspnetcore-runtime']?.version === version;
+		}
+		return r.runtime?.version === version;
+	});
+
+	if (!release) {
+		throw new Error(
+			`Version ${version} not found in releases manifest for ${type}`,
+		);
 	}
 
-	// Official URL has capitalized type in the path
-	const typeCapitalized = type === 'sdk' ? 'Sdk' : 'Runtime';
-	const packageName = type === 'sdk' ? 'sdk' : 'runtime';
+	// Get the appropriate section
+	const section =
+		type === 'sdk'
+			? release.sdk
+			: type === 'aspnetcore'
+				? release['aspnetcore-runtime']
+				: release.runtime;
 
-	return `https://builds.dotnet.microsoft.com/dotnet/${typeCapitalized}/${version}/dotnet-${packageName}-${version}-${platform}-${architecture}.${extension}`;
+	if (!section?.files) {
+		throw new Error(`No files found for ${type} version ${version}`);
+	}
+
+	// Build expected filename pattern
+	const filePattern =
+		type === 'aspnetcore'
+			? `aspnetcore-runtime-${version}-${rid}.${extension}`
+			: type === 'sdk'
+				? `dotnet-sdk-${version}-${rid}.${extension}`
+				: `dotnet-runtime-${version}-${rid}.${extension}`;
+
+	// Find matching file
+	const file = section.files.find(
+		(f) => f.name === filePattern && f.rid === rid,
+	);
+
+	if (!file) {
+		throw new Error(
+			`Download not found for ${type} ${version} on ${rid}. Expected file: ${filePattern}`,
+		);
+	}
+
+	if (!file.hash) {
+		throw new Error(
+			`Hash missing for ${type} ${version} on ${rid}. Cannot validate download integrity.`,
+		);
+	}
+
+	core.debug(`Found download: ${file.url}`);
+	core.debug(`Expected hash: ${file.hash.substring(0, 16)}...`);
+
+	return { url: file.url, hash: file.hash };
 }
 
 /**
