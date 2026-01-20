@@ -95,10 +95,16 @@ export async function saveCache(cacheKey: string): Promise<void> {
 export async function cacheExists(cacheKey: string): Promise<boolean> {
 	try {
 		core.debug(`Checking if cache exists: ${cacheKey}`);
+		const installDir = getDotNetInstallDirectory();
 		const startTime = Date.now();
-		const restoredKey = await cache.restoreCache([], cacheKey, undefined, {
-			lookupOnly: true,
-		});
+		const restoredKey = await cache.restoreCache(
+			[installDir],
+			cacheKey,
+			undefined,
+			{
+				lookupOnly: true,
+			},
+		);
 		const duration = ((Date.now() - startTime) / 1000).toFixed(3);
 		core.info(`Cache lookup took ${duration}s`);
 		return restoredKey !== undefined;
