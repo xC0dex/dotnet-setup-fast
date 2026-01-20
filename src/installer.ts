@@ -35,11 +35,7 @@ function validateDownloadedFile(downloadPath: string, prefix: string): void {
 }
 
 async function downloadDotnetArchive(
-	version: string,
-	type: DotnetType,
 	downloadUrl: string,
-	platform: string,
-	arch: string,
 	prefix: string,
 ): Promise<string> {
 	core.debug(`${prefix} Download URL: ${downloadUrl}`);
@@ -49,10 +45,8 @@ async function downloadDotnetArchive(
 		validateDownloadedFile(downloadPath, prefix);
 		return downloadPath;
 	} catch (error) {
-		const errorMsg = error instanceof Error ? error.message : String(error);
-		throw new Error(
-			`Failed to download .NET ${type} ${version} (${platform}-${arch}): ${errorMsg}`,
-		);
+		const errorMessage = error instanceof Error ? error.message : String(error);
+		throw new Error(`Failed to download from ${downloadUrl}: ${errorMessage}`);
 	}
 }
 
@@ -62,12 +56,12 @@ async function extractDotnetArchive(
 	prefix: string,
 ): Promise<string> {
 	core.info(`${prefix} Extracting...`);
-	const ext = platform === 'win' ? 'zip' : 'tar.gz';
+	const extensions = platform === 'win' ? 'zip' : 'tar.gz';
 	try {
-		return await extractArchive(downloadPath, ext);
+		return await extractArchive(downloadPath, extensions);
 	} catch (error) {
-		const errorMsg = error instanceof Error ? error.message : String(error);
-		throw new Error(`Failed to extract archive: ${errorMsg}`);
+		const errorMessage = error instanceof Error ? error.message : String(error);
+		throw new Error(`Failed to extract archive: ${errorMessage}`);
 	}
 }
 
@@ -98,8 +92,8 @@ async function copyToInstallDir(
 			copySourceDirectory: false,
 		});
 	} catch (error) {
-		const errorMsg = error instanceof Error ? error.message : String(error);
-		throw new Error(`Failed to copy files to ${installDir}: ${errorMsg}`);
+		const errorMessage = error instanceof Error ? error.message : String(error);
+		throw new Error(`Failed to copy files to ${installDir}: ${errorMessage}`);
 	}
 }
 
@@ -137,19 +131,11 @@ export async function installDotNet(
 	const { version, type } = options;
 	const prefix = `[${type.toUpperCase()}]`;
 	const platform = getPlatform();
-	const arch = getArchitecture();
 
 	core.info(`${prefix} Installing ${version}`);
 
 	const downloadUrl = getDotNetDownloadUrl(version, type);
-	const downloadPath = await downloadDotnetArchive(
-		version,
-		type,
-		downloadUrl,
-		platform,
-		arch,
-		prefix,
-	);
+	const downloadPath = await downloadDotnetArchive(downloadUrl, prefix);
 
 	const extractedPath = await extractDotnetArchive(
 		downloadPath,
@@ -177,17 +163,18 @@ export function getDotNetDownloadUrl(
 	type: DotnetType,
 ): string {
 	const platform = getPlatform();
-	const arch = getArchitecture();
-	const ext = platform === 'win' ? 'zip' : 'tar.gz';
+	const architecture = getArchitecture();
+	const extension = platform === 'win' ? 'zip' : 'tar.gz';
 
 	if (type === 'aspnetcore') {
-		return `https://builds.dotnet.microsoft.com/dotnet/aspnetcore/Runtime/${version}/aspnetcore-runtime-${version}-${platform}-${arch}.${ext}`;
+		return `https://builds.dotnet.microsoft.com/dotnet/aspnetcore/Runtime/${version}/aspnetcore-runtime-${version}-${platform}-${architecture}.${extension}`;
 	}
 
+	// Official URL has capitalized type in the path
 	const typeCapitalized = type === 'sdk' ? 'Sdk' : 'Runtime';
 	const packageName = type === 'sdk' ? 'sdk' : 'runtime';
 
-	return `https://builds.dotnet.microsoft.com/dotnet/${typeCapitalized}/${version}/dotnet-${packageName}-${version}-${platform}-${arch}.${ext}`;
+	return `https://builds.dotnet.microsoft.com/dotnet/${typeCapitalized}/${version}/dotnet-${packageName}-${version}-${platform}-${architecture}.${extension}`;
 }
 
 /**
