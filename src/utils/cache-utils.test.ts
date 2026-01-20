@@ -209,13 +209,16 @@ describe('cacheExists', () => {
 	});
 
 	it('should return true when cache entry exists', async () => {
+		vi.mocked(installer.getDotNetInstallDirectory).mockReturnValue(
+			'/path/to/dotnet',
+		);
 		vi.mocked(cache.restoreCache).mockResolvedValue('dotnet-linux-x64-abc123');
 
 		const result = await cacheExists('dotnet-linux-x64-abc123');
 
 		expect(result).toBe(true);
 		expect(cache.restoreCache).toHaveBeenCalledWith(
-			[],
+			['/path/to/dotnet'],
 			'dotnet-linux-x64-abc123',
 			undefined,
 			{ lookupOnly: true },

@@ -42,14 +42,11 @@ export function generateCacheKey(versions: CacheVersions): string {
  */
 export async function restoreCache(cacheKey: string): Promise<boolean> {
 	const installDir = getDotNetInstallDirectory();
-	const startTime = Date.now();
 
 	try {
 		const restoredKey = await cache.restoreCache([installDir], cacheKey);
 
 		if (restoredKey) {
-			const duration = ((Date.now() - startTime) / 1000).toFixed(2);
-			core.info(`Cache restored in ${duration}s`);
 			return true;
 		}
 
@@ -58,7 +55,6 @@ export async function restoreCache(cacheKey: string): Promise<boolean> {
 	} catch (error) {
 		const errorMsg = error instanceof Error ? error.message : String(error);
 		core.warning(`Cache restore failed: ${errorMsg}`);
-		core.debug('Continuing with download...');
 		return false;
 	}
 }
@@ -68,15 +64,12 @@ export async function restoreCache(cacheKey: string): Promise<boolean> {
  */
 export async function saveCache(cacheKey: string): Promise<void> {
 	const installDir = getDotNetInstallDirectory();
-	const startTime = Date.now();
 
 	core.info(`Saving cache: ${cacheKey}`);
 	core.debug(`Cache save path: ${installDir}`);
 
 	try {
 		await cache.saveCache([installDir], cacheKey);
-		const duration = ((Date.now() - startTime) / 1000).toFixed(2);
-		core.info(`Cache saved successfully in ${duration}s`);
 	} catch (error) {
 		const errorMsg = error instanceof Error ? error.message : String(error);
 
@@ -96,7 +89,6 @@ export async function cacheExists(cacheKey: string): Promise<boolean> {
 	try {
 		core.debug(`Checking if cache exists: ${cacheKey}`);
 		const installDir = getDotNetInstallDirectory();
-		const startTime = Date.now();
 		const restoredKey = await cache.restoreCache(
 			[installDir],
 			cacheKey,
@@ -105,12 +97,10 @@ export async function cacheExists(cacheKey: string): Promise<boolean> {
 				lookupOnly: true,
 			},
 		);
-		const duration = ((Date.now() - startTime) / 1000).toFixed(3);
-		core.info(`Cache lookup took ${duration}s`);
 		return restoredKey !== undefined;
 	} catch (error) {
 		const errorMsg = error instanceof Error ? error.message : String(error);
-		core.debug(`Error checking cache existence: ${errorMsg}`);
+		core.warning(`Error checking cache existence: ${errorMsg}`);
 		return false;
 	}
 }
