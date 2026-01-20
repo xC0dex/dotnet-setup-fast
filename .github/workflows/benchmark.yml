@@ -1,0 +1,57 @@
+name: Benchmark
+
+on:
+  push:
+    branches:
+      - benchmark*
+  workflow_dispatch:
+
+jobs:
+  benchmark-official-setup-dotnet:
+    name: Official setup-dotnet (10.x, 9.x, 8.x)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
+
+      - uses: actions/setup-dotnet@baa11fbfe1d6520db94683bd5c7a3818018e4309 # v5
+        with:
+          dotnet-version: |
+            10.x
+            9.x
+            8.x
+
+      - run: dotnet --list-sdks
+
+  benchmark-fast-actions-sdk:
+    name: fast-actions/setup-dotnet (10.x, 9.x, 8.x)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
+
+      - uses: ./
+        with:
+          sdk-version: |
+            10.x
+            9.x
+            8.x
+          cache: false
+
+      - run: dotnet --list-sdks
+
+  benchmark-fast-actions-aspnetcore:
+    name: fast-actions/setup-dotnet (SDK 10.x, ASP.NET Core 9.x, 8.x)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
+
+      - uses: ./
+        with:
+          sdk-version: 10.x
+          aspnetcore-version: |
+            9.x
+            8.x
+          cache: false
+
+      - run: |
+          dotnet --list-sdks
+          dotnet --list-runtimes
