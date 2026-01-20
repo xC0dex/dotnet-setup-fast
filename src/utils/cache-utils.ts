@@ -55,7 +55,6 @@ export async function restoreCache(cacheKey: string): Promise<boolean> {
 	} catch (error) {
 		const errorMsg = error instanceof Error ? error.message : String(error);
 		core.warning(`Cache restore failed: ${errorMsg}`);
-		core.debug('Continuing with download...');
 		return false;
 	}
 }
@@ -71,7 +70,6 @@ export async function saveCache(cacheKey: string): Promise<void> {
 
 	try {
 		await cache.saveCache([installDir], cacheKey);
-		core.info('Cache saved successfully');
 	} catch (error) {
 		const errorMsg = error instanceof Error ? error.message : String(error);
 
@@ -81,5 +79,28 @@ export async function saveCache(cacheKey: string): Promise<void> {
 		} else {
 			core.warning(`Failed to save cache: ${errorMsg}`);
 		}
+	}
+}
+
+/**
+ * Check if a cache entry exists for the given key without restoring it
+ */
+export async function cacheExists(cacheKey: string): Promise<boolean> {
+	try {
+		core.debug(`Checking if cache exists: ${cacheKey}`);
+		const installDir = getDotNetInstallDirectory();
+		const restoredKey = await cache.restoreCache(
+			[installDir],
+			cacheKey,
+			undefined,
+			{
+				lookupOnly: true,
+			},
+		);
+		return restoredKey !== undefined;
+	} catch (error) {
+		const errorMsg = error instanceof Error ? error.message : String(error);
+		core.warning(`Error checking cache existence: ${errorMsg}`);
+		return false;
 	}
 }
