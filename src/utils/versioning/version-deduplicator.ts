@@ -1,13 +1,7 @@
 import * as core from '@actions/core';
-import type { VersionSet } from '../../types';
+import type { VersionResolutionContext, VersionSet } from '../../types';
 import { getSdkIncludedVersions } from './sdk-runtime-mapper';
 import { resolveVersion } from './version-resolver';
-
-export interface VersionResolutionContext {
-	versions: VersionSet;
-	sdkAllowPreview?: boolean;
-	allowPreview?: boolean;
-}
 
 /**
  * Remove redundant versions based on .NET hierarchy:
@@ -16,9 +10,7 @@ export interface VersionResolutionContext {
 export async function deduplicateVersions(
 	context: VersionResolutionContext,
 ): Promise<VersionSet> {
-	const { versions } = context;
-	const sdkAllowPreview = context.sdkAllowPreview ?? false;
-	const allowPreview = context.allowPreview ?? false;
+	const { versions, sdkAllowPreview, allowPreview } = context;
 
 	// Resolve all wildcards to concrete versions
 	const resolvedSdk = versions.sdk.map((v) => ({

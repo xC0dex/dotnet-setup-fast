@@ -1,6 +1,6 @@
 import * as core from '@actions/core';
 import { getDotNetInstallDirectory, installDotNet } from './installer';
-import type { DotnetType, VersionSet } from './types';
+import type { DotnetType, VersionResolutionContext, VersionSet } from './types';
 import {
 	cacheExists,
 	generateCacheKey,
@@ -155,11 +155,9 @@ async function resolveSdkVersions(inputs: ActionInputs): Promise<{
 	};
 }
 
-async function resolveRequestedVersions(inputs: ActionInputs): Promise<{
-	versions: VersionSet;
-	sdkAllowPreview: boolean;
-	allowPreview: boolean;
-}> {
+async function resolveRequestedVersions(
+	inputs: ActionInputs,
+): Promise<VersionResolutionContext> {
 	const sdkResult = await resolveSdkVersions(inputs);
 	const runtimeVersions = parseVersions(inputs.runtimeInput);
 	const aspnetcoreVersions = parseVersions(inputs.aspnetcoreInput);

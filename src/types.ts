@@ -22,3 +22,9 @@ export interface Release {
 export interface ReleaseManifest {
 	releases: Release[];
 }
+
+export interface VersionResolutionContext {
+	versions: VersionSet;
+	sdkAllowPreview: boolean;
+	allowPreview: boolean;
+}
