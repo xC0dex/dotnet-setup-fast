@@ -7,7 +7,7 @@ Parallel downloads, automatic caching, and smart version resolution.
 ## Quickstart
 
 ```yaml
-- uses: actions/checkout@v6
+- uses: actions/checkout@v4
 
 - uses: fast-actions/setup-dotnet@v1
   with:
@@ -59,6 +59,17 @@ Parallel downloads, automatic caching, and smart version resolution.
 - Enabled by default (`cache: true`)
 - Cache keys include OS + architecture + _resolved_ versions (not the input patterns)
 - If `10.x` resolves to a newer patch later, the cache key changes and the action downloads the newer version
+
+## Performance
+
+**Benchmark Results** (`ubuntu-latest`):
+
+| Scenario                                                 | Official Action | fast-actions (without cache) | fast-actions (with cache) |
+| -------------------------------------------------------- | --------------- | ---------------------------- | ------------------------- |
+| Multiple SDKs (10.x, 9.x, 8.x)                           | ~24s            | ~15s                         | ~6s                       |
+| Single SDK + Runtimes (SDK 10.x, ASP.NET Core 9.x + 8.x) | (Not possible)  | ~9s                          | ~4s                       |
+
+**Note**: Actual performance depends on various factors including runner specifications and network conditions.
 
 ## Documentation
 
