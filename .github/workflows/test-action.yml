@@ -186,7 +186,7 @@ jobs:
         with:
           sdk-version: ${{ matrix.scenario.sdk }}
           runtime-version: ${{ matrix.scenario.runtime }}
-          aspnetcore-version: ${{ matrix.scenario.aspnetcore }} 
+          aspnetcore-version: ${{ matrix.scenario.aspnetcore }}
           cache: false
 
       - name: Verify installation
