@@ -21,22 +21,18 @@ jobs:
         sample:
           - name: 'Exact Version'
             file: 'global.json.exact'
-            expected-major: '10'
           - name: 'Latest Patch'
             file: 'global.json.patch'
-            expected-major: '9'
           - name: 'Latest Feature'
             file: 'global.json.feature'
-            expected-major: '8'
           - name: 'Latest Minor'
             file: 'global.json.minor'
-            expected-major: '8'
           - name: 'Preview Exact Version'
             file: 'global.json.preview'
-            expected-major: '9'
           - name: 'Preview with Latest Major'
             file: 'global.json.preview-latestmajor'
-            expected-major: '10'
+          - name: 'With Comments'
+            file: 'global.json.with-comments'
 
     steps:
       - name: Checkout
@@ -77,40 +73,6 @@ jobs:
         run: |
           dotnet --list-sdks
           dotnet --list-runtimes
-
-  test-global-json-prerelease:
-    name: Test global.json with Prerelease
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        sample:
-          - name: 'Preview with allowPrerelease'
-            file: 'global.json.preview'
-          - name: 'Preview with Latest Major'
-            file: 'global.json.preview-latestmajor'
-          - name: 'With Comments'
-            file: 'global.json.with-comments'
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
-
-      - name: Setup test environment with global.json
-        shell: bash
-        run: |
-          cp samples/${{ matrix.sample.file }} global.json
-          cat global.json
-
-      - name: Setup .NET from global.json
-        uses: ./
-        id: setup-dotnet
-        with:
-          cache: false
-
-      - name: Verify SDK installation
-        run: |
-          dotnet --list-sdks
 
   test-caching:
     name: Test Caching Enabled
@@ -207,6 +169,11 @@ jobs:
             sdk: 'lts'
             runtime: ''
             aspnetcore: '9.x'
+          - name: 'Preview ASP.NET Core overrides global.json'
+            global-json-file: 'global.json.preview'
+            sdk: ''
+            runtime: ''
+            aspnetcore: '9.x.x'
     steps:
       - name: Checkout
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
@@ -225,6 +192,7 @@ jobs:
           sdk-version: ${{ matrix.scenario.sdk }}
           runtime-version: ${{ matrix.scenario.runtime }}
           aspnetcore-version: ${{ matrix.scenario.aspnetcore }}
+          allow-preview: ${{ matrix.scenario.global-json-file }} == 'global.json.preview'
           cache: false
 
       - name: Verify installation

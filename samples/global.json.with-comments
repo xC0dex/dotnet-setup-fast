@@ -1,44 +1,6 @@
 {
-	// .NET SDK Configuration with Comments
-	// This file demonstrates JSON comment support in global.json
-	// Supports both single-line (//) and multi-line (/* */) comments
-
+	// Hello world
 	"sdk": {
-		// Specify the .NET SDK version
-		// Use full version format: major.minor.patch (e.g., 8.0.100)
-		// Preview versions: major.minor.patch-prerelease (e.g., 9.0.100-preview.7)
-		"version": "8.0.100",
-
-		/* Roll forward policy controls version selection:
-		 * 
-		 * Options:
-		 * - disable: Use exact version only
-		 * - patch: Allow patch version increases (8.0.100 -> 8.0.101)
-		 * - feature: Allow feature band increases (8.0.100 -> 8.0.200)
-		 * - minor: Allow minor version increases (8.0.x -> 8.1.x)
-		 * - major: Allow major version increases (8.x.x -> 9.x.x)
-		 * - latestPatch: Use highest patch >= specified
-		 * - latestFeature: Use highest feature band >= specified
-		 * - latestMinor: Use highest minor >= specified
-		 * - latestMajor: Use highest major >= specified
-		 * 
-		 * Default: patch (when version is specified)
-		 */
-		"rollForward": "latestPatch"
-
-		/* Preview/prerelease versions:
-		 * 
-		 * Set allowPrerelease to true for preview versions:
-		 * "version": "9.0.100-preview.7",
-		 * "allowPrerelease": true
-		 * 
-		 * Default: true (in non-Visual Studio contexts like GitHub Actions)
-		 */
+		"version": "10.0.100"
 	}
-
-	// Additional notes:
-	// - Wildcards (8.x.x) are NOT supported in global.json version field
-	// - Use rollForward policies instead for flexible version selection
-	// - Comments are supported per official .NET specification
-	// - See: https://learn.microsoft.com/en-us/dotnet/core/tools/global-json
 }
