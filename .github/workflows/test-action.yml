@@ -192,7 +192,7 @@ jobs:
           sdk-version: ${{ matrix.scenario.sdk }}
           runtime-version: ${{ matrix.scenario.runtime }}
           aspnetcore-version: ${{ matrix.scenario.aspnetcore }}
-          allow-preview: ${{ matrix.scenario.global-json-file }} == 'global.json.preview'
+          allow-preview: ${{ matrix.scenario.global-json-file }} == 'global.json.preview' ? 'true' : 'false'
           cache: false
 
       - name: Verify installation
