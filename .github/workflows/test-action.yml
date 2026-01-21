@@ -262,3 +262,25 @@ jobs:
         run: |
           dotnet --list-sdks
           dotnet --list-runtimes
+
+  test-preview-deduplication:
+    name: Test Preview SDK Deduplication
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
+
+      - name: Setup global.json
+        run: cp samples/global.json.preview global.json
+
+      - name: Setup .NET with preview SDK and ASP.NET Core
+        uses: ./
+        with:
+          aspnetcore-version: latest
+          allow-preview: true
+          cache: false
+
+      - name: Verify installation
+        run: |
+          dotnet --list-sdks
+          dotnet --list-runtimes
