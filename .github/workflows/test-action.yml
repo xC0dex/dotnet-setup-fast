@@ -169,11 +169,6 @@ jobs:
             sdk: 'lts'
             runtime: ''
             aspnetcore: '9.x'
-          - name: 'Preview ASP.NET Core overrides global.json'
-            global-json-file: 'global.json.preview'
-            sdk: ''
-            runtime: ''
-            aspnetcore: '9.x.x'
     steps:
       - name: Checkout
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
@@ -191,8 +186,7 @@ jobs:
         with:
           sdk-version: ${{ matrix.scenario.sdk }}
           runtime-version: ${{ matrix.scenario.runtime }}
-          aspnetcore-version: ${{ matrix.scenario.aspnetcore }}
-          allow-preview: ${{ matrix.scenario.global-json-file }} == 'global.json.preview' ? 'true' : 'false'
+          aspnetcore-version: ${{ matrix.scenario.aspnetcore }} 
           cache: false
 
       - name: Verify installation
