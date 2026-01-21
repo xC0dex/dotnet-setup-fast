@@ -1,19 +1,19 @@
-import { defineConfig } from "vite";
-import { resolve } from "path";
+import { defineConfig } from 'vite';
+import { resolve } from 'node:path';
 
 export default defineConfig({
 	ssr: {
 		noExternal: true,
-		target: "node",
+		target: 'node',
 	},
 	build: {
 		ssr: true,
-		outDir: "dist",
+		outDir: 'dist',
 		rollupOptions: {
-			input: resolve(__dirname, "src/main.ts"),
+			input: resolve(__dirname, 'src/main.ts'),
 			output: {
-				entryFileNames: "index.js",
-				format: "es",
+				entryFileNames: 'index.js',
+				format: 'es',
 			},
 		},
 		sourcemap: false,

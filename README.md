@@ -2,7 +2,7 @@
 
 The fastest way to setup .NET SDK/Runtime in your workflow.
 
-Parallel downloads. Automatic caching. Smart version resolution. 
+Parallel downloads. Automatic caching. Smart version resolution.
 
 ## Quick Setup
 
@@ -47,13 +47,12 @@ That's it!
 
 **Benchmark Results** (Ubuntu runner):
 
-| Scenario | Official Action | fast-actions (without cache) | fast-actions (with cache) |
-|----------|-----------------|------------------------------|----------------------|
-| Multiple SDKs (10.x, 9.x, 8.x) | ~24s | ~15s | ~6s |
-| Single SDK + Runtimes (SDK 10.x, ASP.NET Core 9.x + 8.x) | (Not possible) | ~9s | ~4s |
+| Scenario                                                 | Official Action | fast-actions (without cache) | fast-actions (with cache) |
+| -------------------------------------------------------- | --------------- | ---------------------------- | ------------------------- |
+| Multiple SDKs (10.x, 9.x, 8.x)                           | ~24s            | ~15s                         | ~6s                       |
+| Single SDK + Runtimes (SDK 10.x, ASP.NET Core 9.x + 8.x) | (Not possible)  | ~9s                          | ~4s                       |
 
 **Note**: Actual performance depends on various factors including runner specifications and network conditions.
-
 
 ## Documentation
 
@@ -65,24 +64,25 @@ Check out the [Migration Guide](https://github.com/fast-actions/setup-dotnet/blo
 
 ## Inputs
 
-| Input | Description | Required | Default |
-|-------|-------------|----------|---------|
-| `sdk-version` | SDK version(s). Supports wildcards, keywords (`latest`, `lts`, `sts`), comma-separated, or YAML array. | No | – |
-| `runtime-version` | Runtime version(s). Same format as `sdk-version`. | No | – |
-| `aspnetcore-version` | ASP.NET Core Runtime version(s). Same format as `sdk-version`. | No | – |
-| `global-json` | Path to `global.json` for SDK resolution. | No | `./global.json` |
-| `cache` | Enable caching of .NET installations. | No | `true` |
-| `allow-preview` | Allow preview releases when using keywords (`latest`, `lts`, `sts`). | No | `false` |
+| Input                | Description                                                                                            | Required | Default         |
+| -------------------- | ------------------------------------------------------------------------------------------------------ | -------- | --------------- |
+| `sdk-version`        | SDK version(s). Supports wildcards, keywords (`latest`, `lts`, `sts`), comma-separated, or YAML array. | No       | –               |
+| `runtime-version`    | Runtime version(s). Same format as `sdk-version`.                                                      | No       | –               |
+| `aspnetcore-version` | ASP.NET Core Runtime version(s). Same format as `sdk-version`.                                         | No       | –               |
+| `global-json`        | Path to `global.json` for SDK resolution.                                                              | No       | `./global.json` |
+| `cache`              | Enable caching of .NET installations.                                                                  | No       | `true`          |
+| `allow-preview`      | Allow preview releases when using keywords (`latest`, `lts`, `sts`).                                   | No       | `false`         |
 
 ## Outputs
 
-| Output | Description |
-|--------|-------------|
-| `dotnet-version` | Installed .NET versions (e.g., `sdk:9.0.100, runtime:8.0.0`) |
-| `dotnet-path` | Path to .NET installation directory |
-| `cache-hit` | Whether installation was restored from cache (`true`/`false`) |
+| Output           | Description                                                   |
+| ---------------- | ------------------------------------------------------------- |
+| `dotnet-version` | Installed .NET versions (e.g., `sdk:9.0.100, runtime:8.0.0`)  |
+| `dotnet-path`    | Path to .NET installation directory                           |
+| `cache-hit`      | Whether installation was restored from cache (`true`/`false`) |
 
 ## Why `fast-actions/setup-dotnet`?
+
 I built this because I care a lot about workflow execution time. The official `actions/setup-dotnet` works great for most cases, but in my workflows it was consistently slower than I wanted (especially when the runner spends a bunch of time installing multiple SDKs/Runtimes).
 
 I tried to improve the official action first: I opened a PR there, but it ended up being ignored/stalled. Rather than keep waiting, I rebuilt the idea with a different focus: faster installs, better parallelization, and caching.
