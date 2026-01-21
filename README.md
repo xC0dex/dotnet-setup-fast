@@ -108,4 +108,4 @@ This isn’t meant to replace the official action for everyone. If you don’t c
 
 ## License
 
-This project is licensed under the MIT License. See [LICENSE](LICENSE).
+This project is licensed under the MIT License. See [LICENSE](https://github.com/fast-actions/setup-dotnet/blob/main/LICENSE).
