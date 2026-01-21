@@ -7,6 +7,7 @@ This guide covers all features, use cases, and advanced scenarios for `setup-dot
 - [Installation Options](#installation-options)
 - [Version Resolution](#version-resolution)
 - [Caching](#caching)
+- [Security](#security)
 - [global.json Support](#globaljson-support)
 - [Real-World Use Cases](#real-world-use-cases)
 - [Advanced Scenarios](#advanced-scenarios)
@@ -210,6 +211,24 @@ For scenarios where you always want fresh downloads:
 ```
 
 ---
+
+## Security
+
+### Verified downloads
+
+This action verifies downloads with **SHA-512** hashes from the official .NET release manifests before installing.
+
+### Pinning the action to a commit SHA
+
+For maximum supply-chain safety, you can pin the action to a specific commit SHA (instead of a moving tag like `v1`):
+
+```yaml
+- uses: fast-actions/setup-dotnet@<commit-sha> # v1
+  with:
+    sdk-version: 'lts'
+```
+
+This ensures you always run the exact same action code until you intentionally update the pinned SHA.
 
 ## global.json Support
 
