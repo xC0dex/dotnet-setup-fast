@@ -65,18 +65,17 @@ export async function fetchAndCacheReleaseInfo(
 	}
 
 	const data = (await response.json()) as {
-		releases?: ReleaseInfo[];
-		'releases-index'?: ReleaseInfo[];
+		'releases-index': ReleaseInfo[];
 	};
 
-	const releases = data.releases || data['releases-index'];
+	const releases = data['releases-index'];
 	if (!Array.isArray(releases)) {
 		throw new Error(
 			'Invalid API response: releases data is missing or malformed',
 		);
 	}
 
-	core.info(`Release Index (formatted):\n${JSON.stringify(releases, null, 2)}`);
+	core.debug(`Release Index:\n${JSON.stringify(releases, null, 2)}`);
 
 	cachedReleases = releases;
 }
