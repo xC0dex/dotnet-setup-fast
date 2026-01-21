@@ -9,7 +9,7 @@ describe('getSdkIncludedVersions', () => {
 	});
 
 	it('should return runtime and aspnetcore versions for valid SDK', async () => {
-		global.fetch = vi.fn().mockResolvedValue({
+		globalThis.fetch = vi.fn().mockResolvedValue({
 			ok: true,
 			json: async () => ({
 				releases: [
@@ -31,7 +31,7 @@ describe('getSdkIncludedVersions', () => {
 	});
 
 	it('should return null for SDK not found in releases', async () => {
-		global.fetch = vi.fn().mockResolvedValue({
+		globalThis.fetch = vi.fn().mockResolvedValue({
 			ok: true,
 			json: async () => ({
 				releases: [
@@ -52,7 +52,7 @@ describe('getSdkIncludedVersions', () => {
 	});
 
 	it('should handle API errors gracefully', async () => {
-		global.fetch = vi.fn().mockResolvedValue({
+		globalThis.fetch = vi.fn().mockResolvedValue({
 			ok: false,
 			statusText: 'Not Found',
 		});
@@ -75,7 +75,7 @@ describe('getSdkIncludedVersions', () => {
 	});
 
 	it('should extract correct channel from SDK version', async () => {
-		global.fetch = vi.fn().mockResolvedValue({
+		globalThis.fetch = vi.fn().mockResolvedValue({
 			ok: true,
 			json: async () => ({
 				releases: [
@@ -95,13 +95,13 @@ describe('getSdkIncludedVersions', () => {
 			aspnetcore: '8.0.6',
 		});
 
-		expect(global.fetch).toHaveBeenCalledWith(
+		expect(globalThis.fetch).toHaveBeenCalledWith(
 			'https://builds.dotnet.microsoft.com/dotnet/release-metadata/8.0/releases.json',
 		);
 	});
 
 	it('should handle SDK with runtime but no aspnetcore', async () => {
-		global.fetch = vi.fn().mockResolvedValue({
+		globalThis.fetch = vi.fn().mockResolvedValue({
 			ok: true,
 			json: async () => ({
 				releases: [
@@ -122,7 +122,7 @@ describe('getSdkIncludedVersions', () => {
 	});
 
 	it('should handle network errors', async () => {
-		global.fetch = vi.fn().mockRejectedValue(new Error('Network error'));
+		globalThis.fetch = vi.fn().mockRejectedValue(new Error('Network error'));
 
 		const result = await sdkRuntimeMapper.getSdkIncludedVersions('7.0.100');
 

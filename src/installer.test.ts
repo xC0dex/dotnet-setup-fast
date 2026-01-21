@@ -4,7 +4,7 @@ import * as platformUtils from './utils/platform-utils';
 import { clearReleaseCache } from './utils/versioning/release-cache';
 
 // Mock fetch globally
-global.fetch = vi.fn();
+globalThis.fetch = vi.fn();
 
 describe('getDotNetDownloadInfo', () => {
 	beforeEach(() => {

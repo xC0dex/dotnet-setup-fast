@@ -231,7 +231,7 @@ describe('resolveVersion', () => {
 			],
 		};
 
-		global.fetch = vi.fn().mockResolvedValue({
+		globalThis.fetch = vi.fn().mockResolvedValue({
 			ok: true,
 			json: async () => mockResponse,
 		});
@@ -243,7 +243,7 @@ describe('resolveVersion', () => {
 	});
 
 	it('should throw error when fetch fails', async () => {
-		global.fetch = vi.fn().mockResolvedValue({
+		globalThis.fetch = vi.fn().mockResolvedValue({
 			ok: false,
 			statusText: 'Not Found',
 		});
@@ -254,13 +254,13 @@ describe('resolveVersion', () => {
 	});
 
 	it('should throw error when network error occurs', async () => {
-		global.fetch = vi.fn().mockRejectedValue(new Error('Network error'));
+		globalThis.fetch = vi.fn().mockRejectedValue(new Error('Network error'));
 
 		await expect(fetchAndCacheReleaseInfo()).rejects.toThrow('Network error');
 	});
 
 	it('should throw error when API response is malformed', async () => {
-		global.fetch = vi.fn().mockResolvedValue({
+		globalThis.fetch = vi.fn().mockResolvedValue({
 			ok: true,
 			json: async () => ({}),
 		});
@@ -271,7 +271,7 @@ describe('resolveVersion', () => {
 	});
 
 	it('should throw error when API response has null releases', async () => {
-		global.fetch = vi.fn().mockResolvedValue({
+		globalThis.fetch = vi.fn().mockResolvedValue({
 			ok: true,
 			json: async () => ({ releases: null }),
 		});

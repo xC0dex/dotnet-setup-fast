@@ -38,7 +38,7 @@ pnpm validate # Runs all commands
 - **Location**: Tests in `*.test.ts` files alongside source files (e.g., `version-resolver.test.ts` next to `version-resolver.ts`)
 - **Focus**: Keep tests simple and focused on essential behavior
 - **Coverage**: Test happy paths, edge cases, and error handling
-- **Mocking**: Mock external dependencies (@actions/\*, fetch, etc.)
+- **Mocking**: Mock external dependencies (@actions/\*, fetch, etc.) using `globalThis` for global APIs
 - **Cleanup**: Always use `afterEach` to clean up test artifacts (temp files, directories)
 
 Example test structure:
