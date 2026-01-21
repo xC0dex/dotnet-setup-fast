@@ -18,7 +18,7 @@ describe('fetchReleaseManifest', () => {
 			],
 		};
 
-		global.fetch = vi.fn().mockResolvedValue({
+		globalThis.fetch = vi.fn().mockResolvedValue({
 			ok: true,
 			json: async () => mockManifest,
 		});
@@ -26,7 +26,7 @@ describe('fetchReleaseManifest', () => {
 		const result = await fetchReleaseManifest('8.0.100');
 
 		expect(result).toEqual(mockManifest);
-		expect(global.fetch).toHaveBeenCalledWith(
+		expect(globalThis.fetch).toHaveBeenCalledWith(
 			'https://builds.dotnet.microsoft.com/dotnet/release-metadata/8.0/releases.json',
 		);
 	});
@@ -36,7 +36,7 @@ describe('fetchReleaseManifest', () => {
 			releases: [{ sdks: [{ version: '8.0.100' }] }],
 		};
 
-		global.fetch = vi.fn().mockResolvedValue({
+		globalThis.fetch = vi.fn().mockResolvedValue({
 			ok: true,
 			json: async () => mockManifest,
 		});
@@ -46,7 +46,7 @@ describe('fetchReleaseManifest', () => {
 			fetchReleaseManifest('8.0.200'),
 		]);
 
-		expect(global.fetch).toHaveBeenCalledTimes(1);
+		expect(globalThis.fetch).toHaveBeenCalledTimes(1);
 	});
 
 	it('should throw error for invalid version', async () => {
@@ -56,7 +56,7 @@ describe('fetchReleaseManifest', () => {
 	});
 
 	it('should throw error when fetch fails', async () => {
-		global.fetch = vi.fn().mockResolvedValue({
+		globalThis.fetch = vi.fn().mockResolvedValue({
 			ok: false,
 			statusText: 'Not Found',
 		});
@@ -71,7 +71,7 @@ describe('fetchReleaseManifest', () => {
 			releases: [{ sdks: [{ version: '8.0.100' }] }],
 		};
 
-		global.fetch = vi.fn().mockResolvedValue({
+		globalThis.fetch = vi.fn().mockResolvedValue({
 			ok: true,
 			json: async () => mockManifest,
 		});
@@ -80,6 +80,6 @@ describe('fetchReleaseManifest', () => {
 		clearReleaseCache();
 		await fetchReleaseManifest('8.0.100');
 
-		expect(global.fetch).toHaveBeenCalledTimes(2);
+		expect(globalThis.fetch).toHaveBeenCalledTimes(2);
 	});
 });

@@ -254,4 +254,4 @@ export async function run(): Promise<void> {
 }
 
 // Run the action
-run();
+await run();
