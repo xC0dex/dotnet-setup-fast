@@ -27,8 +27,8 @@ describe('readGlobalJson', () => {
 		});
 		await fs.writeFile(testFile, content, 'utf-8');
 
-		const version = await readGlobalJson(testFile);
-		expect(version).toBe('8.0.100');
+		const result = await readGlobalJson(testFile);
+		expect(result).toEqual({ version: '8.0.100', allowPrerelease: false });
 	});
 
 	it('should apply rollForward: patch policy', async () => {
@@ -40,8 +40,8 @@ describe('readGlobalJson', () => {
 		});
 		await fs.writeFile(testFile, content, 'utf-8');
 
-		const version = await readGlobalJson(testFile);
-		expect(version).toBe('8.0.x');
+		const result = await readGlobalJson(testFile);
+		expect(result).toEqual({ version: '8.0.x', allowPrerelease: false });
 	});
 
 	it('should apply rollForward: latestPatch policy', async () => {
@@ -53,8 +53,8 @@ describe('readGlobalJson', () => {
 		});
 		await fs.writeFile(testFile, content, 'utf-8');
 
-		const version = await readGlobalJson(testFile);
-		expect(version).toBe('8.0.x');
+		const result = await readGlobalJson(testFile);
+		expect(result).toEqual({ version: '8.0.x', allowPrerelease: false });
 	});
 
 	it('should apply rollForward: feature policy', async () => {
@@ -66,8 +66,8 @@ describe('readGlobalJson', () => {
 		});
 		await fs.writeFile(testFile, content, 'utf-8');
 
-		const version = await readGlobalJson(testFile);
-		expect(version).toBe('8.0.x');
+		const result = await readGlobalJson(testFile);
+		expect(result).toEqual({ version: '8.0.x', allowPrerelease: false });
 	});
 
 	it('should apply rollForward: latestFeature policy', async () => {
@@ -79,8 +79,8 @@ describe('readGlobalJson', () => {
 		});
 		await fs.writeFile(testFile, content, 'utf-8');
 
-		const version = await readGlobalJson(testFile);
-		expect(version).toBe('8.0.x');
+		const result = await readGlobalJson(testFile);
+		expect(result).toEqual({ version: '8.0.x', allowPrerelease: false });
 	});
 
 	it('should apply rollForward: minor policy', async () => {
@@ -92,8 +92,8 @@ describe('readGlobalJson', () => {
 		});
 		await fs.writeFile(testFile, content, 'utf-8');
 
-		const version = await readGlobalJson(testFile);
-		expect(version).toBe('8.x.x');
+		const result = await readGlobalJson(testFile);
+		expect(result).toEqual({ version: '8.x.x', allowPrerelease: false });
 	});
 
 	it('should apply rollForward: latestMinor policy', async () => {
@@ -105,8 +105,8 @@ describe('readGlobalJson', () => {
 		});
 		await fs.writeFile(testFile, content, 'utf-8');
 
-		const version = await readGlobalJson(testFile);
-		expect(version).toBe('8.x.x');
+		const result = await readGlobalJson(testFile);
+		expect(result).toEqual({ version: '8.x.x', allowPrerelease: false });
 	});
 
 	it('should apply rollForward: major policy', async () => {
@@ -118,8 +118,8 @@ describe('readGlobalJson', () => {
 		});
 		await fs.writeFile(testFile, content, 'utf-8');
 
-		const version = await readGlobalJson(testFile);
-		expect(version).toBe('x.x.x');
+		const result = await readGlobalJson(testFile);
+		expect(result).toEqual({ version: 'x.x.x', allowPrerelease: false });
 	});
 
 	it('should apply rollForward: latestMajor policy', async () => {
@@ -131,8 +131,8 @@ describe('readGlobalJson', () => {
 		});
 		await fs.writeFile(testFile, content, 'utf-8');
 
-		const version = await readGlobalJson(testFile);
-		expect(version).toBe('x.x.x');
+		const result = await readGlobalJson(testFile);
+		expect(result).toEqual({ version: 'x.x.x', allowPrerelease: false });
 	});
 
 	it('should not apply rollForward: disable policy', async () => {
@@ -144,8 +144,8 @@ describe('readGlobalJson', () => {
 		});
 		await fs.writeFile(testFile, content, 'utf-8');
 
-		const version = await readGlobalJson(testFile);
-		expect(version).toBe('8.0.100');
+		const result = await readGlobalJson(testFile);
+		expect(result).toEqual({ version: '8.0.100', allowPrerelease: false });
 	});
 
 	it('should handle unknown rollForward policy', async () => {
@@ -157,8 +157,8 @@ describe('readGlobalJson', () => {
 		});
 		await fs.writeFile(testFile, content, 'utf-8');
 
-		const version = await readGlobalJson(testFile);
-		expect(version).toBe('8.0.100');
+		const result = await readGlobalJson(testFile);
+		expect(result).toEqual({ version: '8.0.100', allowPrerelease: false });
 	});
 
 	it('should return null for missing file', async () => {
@@ -176,17 +176,17 @@ describe('readGlobalJson', () => {
 		);
 	});
 
-	it('should return null for missing sdk.version', async () => {
+	it('should return x.x.x for missing sdk.version', async () => {
 		const content = JSON.stringify({
 			sdk: {},
 		});
 		await fs.writeFile(testFile, content, 'utf-8');
 
-		const version = await readGlobalJson(testFile);
-		expect(version).toBeNull();
+		const result = await readGlobalJson(testFile);
+		expect(result).toEqual({ version: 'x.x.x', allowPrerelease: false });
 	});
 
-	it('should return null for missing sdk section', async () => {
+	it('should return x.x.x for missing sdk section', async () => {
 		const content = JSON.stringify({
 			msbuild: {
 				version: '1.0.0',
@@ -194,8 +194,8 @@ describe('readGlobalJson', () => {
 		});
 		await fs.writeFile(testFile, content, 'utf-8');
 
-		const version = await readGlobalJson(testFile);
-		expect(version).toBeNull();
+		const result = await readGlobalJson(testFile);
+		expect(result).toEqual({ version: 'x.x.x', allowPrerelease: false });
 	});
 
 	it('should reject wildcard versions in global.json', async () => {
@@ -273,8 +273,8 @@ describe('readGlobalJson', () => {
 		});
 		await fs.writeFile(testFile, content, 'utf-8');
 
-		const version = await readGlobalJson(testFile);
-		expect(version).toBe('8.0.100');
+		const result = await readGlobalJson(testFile);
+		expect(result).toEqual({ version: '8.0.100', allowPrerelease: true });
 	});
 
 	it('should accept preview version when allowPrerelease is true', async () => {
@@ -286,8 +286,11 @@ describe('readGlobalJson', () => {
 		});
 		await fs.writeFile(testFile, content, 'utf-8');
 
-		const version = await readGlobalJson(testFile);
-		expect(version).toBe('9.0.100-preview.7');
+		const result = await readGlobalJson(testFile);
+		expect(result).toEqual({
+			version: '9.0.100-preview.7',
+			allowPrerelease: true,
+		});
 	});
 
 	it('should accept preview version with complex prerelease suffix', async () => {
@@ -299,8 +302,11 @@ describe('readGlobalJson', () => {
 		});
 		await fs.writeFile(testFile, content, 'utf-8');
 
-		const version = await readGlobalJson(testFile);
-		expect(version).toBe('9.0.100-preview.7.24407.12');
+		const result = await readGlobalJson(testFile);
+		expect(result).toEqual({
+			version: '9.0.100-preview.7.24407.12',
+			allowPrerelease: true,
+		});
 	});
 
 	it('should reject preview version when allowPrerelease is false', async () => {
@@ -339,8 +345,8 @@ describe('readGlobalJson', () => {
 		});
 		await fs.writeFile(testFile, content, 'utf-8');
 
-		const version = await readGlobalJson(testFile);
-		expect(version).toBe('9.0.100-rc.2');
+		const result = await readGlobalJson(testFile);
+		expect(result).toEqual({ version: '9.0.100-rc.2', allowPrerelease: true });
 	});
 
 	it('should accept alpha/beta versions when allowPrerelease is true', async () => {
@@ -352,8 +358,11 @@ describe('readGlobalJson', () => {
 		});
 		await fs.writeFile(testFile, content, 'utf-8');
 
-		const version = await readGlobalJson(testFile);
-		expect(version).toBe('9.0.100-alpha.1');
+		const result = await readGlobalJson(testFile);
+		expect(result).toEqual({
+			version: '9.0.100-alpha.1',
+			allowPrerelease: true,
+		});
 	});
 
 	it('should apply rollForward: latestMajor with allowPrerelease flag', async () => {
@@ -366,8 +375,34 @@ describe('readGlobalJson', () => {
 		});
 		await fs.writeFile(testFile, content, 'utf-8');
 
-		const version = await readGlobalJson(testFile);
-		expect(version).toBe('x.x.x');
+		const result = await readGlobalJson(testFile);
+		expect(result).toEqual({ version: 'x.x.x', allowPrerelease: true });
+	});
+
+	it('should return x.x.x with allowPrerelease when version is missing but allowPrerelease is true', async () => {
+		const content = JSON.stringify({
+			sdk: {
+				allowPrerelease: true,
+			},
+		});
+		await fs.writeFile(testFile, content, 'utf-8');
+
+		const result = await readGlobalJson(testFile);
+		expect(result).toEqual({ version: 'x.x.x', allowPrerelease: true });
+	});
+
+	it('should ignore rollForward when no version is specified', async () => {
+		const content = JSON.stringify({
+			sdk: {
+				rollForward: 'latestMajor',
+				allowPrerelease: false,
+			},
+		});
+		await fs.writeFile(testFile, content, 'utf-8');
+
+		const result = await readGlobalJson(testFile);
+		// rollForward should be ignored when version is missing
+		expect(result).toEqual({ version: 'x.x.x', allowPrerelease: false });
 	});
 });
 
@@ -419,8 +454,8 @@ describe('JSON Comment Support', () => {
 		}`;
 		await fs.writeFile(testFile, content, 'utf-8');
 
-		const version = await readGlobalJson(testFile);
-		expect(version).toBe('8.0.100');
+		const result = await readGlobalJson(testFile);
+		expect(result).toEqual({ version: '8.0.100', allowPrerelease: false });
 	});
 
 	it('should parse JSON with multi-line comments', async () => {
@@ -433,8 +468,8 @@ describe('JSON Comment Support', () => {
 		}`;
 		await fs.writeFile(testFile, content, 'utf-8');
 
-		const version = await readGlobalJson(testFile);
-		expect(version).toBe('8.0.100');
+		const result = await readGlobalJson(testFile);
+		expect(result).toEqual({ version: '8.0.100', allowPrerelease: false });
 	});
 
 	it('should parse JSON with mixed comment styles', async () => {
@@ -449,8 +484,8 @@ describe('JSON Comment Support', () => {
 		}`;
 		await fs.writeFile(testFile, content, 'utf-8');
 
-		const version = await readGlobalJson(testFile);
-		expect(version).toBe('9.0.x');
+		const result = await readGlobalJson(testFile);
+		expect(result).toEqual({ version: '9.0.x', allowPrerelease: false });
 	});
 
 	it('should handle comments at various positions', async () => {
@@ -465,8 +500,8 @@ describe('JSON Comment Support', () => {
 		// Bottom comment`;
 		await fs.writeFile(testFile, content, 'utf-8');
 
-		const version = await readGlobalJson(testFile);
-		expect(version).toBe('7.0.100');
+		const result = await readGlobalJson(testFile);
+		expect(result).toEqual({ version: '7.0.100', allowPrerelease: false });
 	});
 
 	it('should ignore commented-out properties', async () => {
@@ -478,9 +513,9 @@ describe('JSON Comment Support', () => {
 		}`;
 		await fs.writeFile(testFile, content, 'utf-8');
 
-		const version = await readGlobalJson(testFile);
+		const result = await readGlobalJson(testFile);
 		// No rollForward applied since it's commented out
-		expect(version).toBe('8.0.100');
+		expect(result).toEqual({ version: '8.0.100', allowPrerelease: false });
 	});
 
 	it('should not treat comment-like strings as comments', async () => {
@@ -492,8 +527,8 @@ describe('JSON Comment Support', () => {
 		}`;
 		await fs.writeFile(testFile, content, 'utf-8');
 
-		const version = await readGlobalJson(testFile);
-		expect(version).toBe('8.0.100');
+		const result = await readGlobalJson(testFile);
+		expect(result).toEqual({ version: '8.0.100', allowPrerelease: false });
 	});
 
 	it('should handle empty comments', async () => {
@@ -506,8 +541,8 @@ describe('JSON Comment Support', () => {
 		}`;
 		await fs.writeFile(testFile, content, 'utf-8');
 
-		const version = await readGlobalJson(testFile);
-		expect(version).toBe('8.0.100');
+		const result = await readGlobalJson(testFile);
+		expect(result).toEqual({ version: '8.0.100', allowPrerelease: false });
 	});
 
 	it('should parse complex real-world example with documentation comments', async () => {
@@ -530,7 +565,7 @@ describe('JSON Comment Support', () => {
 		}`;
 		await fs.writeFile(testFile, content, 'utf-8');
 
-		const version = await readGlobalJson(testFile);
-		expect(version).toBe('9.0.x');
+		const result = await readGlobalJson(testFile);
+		expect(result).toEqual({ version: '9.0.x', allowPrerelease: true });
 	});
 });

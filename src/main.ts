@@ -122,34 +122,56 @@ function readInputs(): ActionInputs {
 	};
 }
 
-async function resolveSdkVersions(inputs: ActionInputs): Promise<string[]> {
+async function resolveSdkVersions(inputs: ActionInputs): Promise<{
+	versions: string[];
+	allowPreview: boolean;
+}> {
 	if (inputs.sdkInput) {
-		return parseVersions(inputs.sdkInput);
+		// Use Action input allowPreview for explicitly provided SDK versions
+		return {
+			versions: parseVersions(inputs.sdkInput),
+			allowPreview: inputs.allowPreview,
+		};
 	}
 
 	const globalJsonPath = inputs.globalJsonInput || getDefaultGlobalJsonPath();
 	core.debug(`Looking for global.json at: ${globalJsonPath}`);
 
-	const globalJsonVersion = await readGlobalJson(globalJsonPath);
-	if (globalJsonVersion) {
-		core.info(`Using SDK version from global.json: ${globalJsonVersion}`);
-		return [globalJsonVersion];
+	const globalJsonResult = await readGlobalJson(globalJsonPath);
+	if (globalJsonResult) {
+		core.info(
+			`Using SDK version from global.json: ${globalJsonResult.version}`,
+		);
+		// global.json controls its own allowPrerelease setting
+		return {
+			versions: [globalJsonResult.version],
+			allowPreview: globalJsonResult.allowPrerelease,
+		};
 	}
 
-	return [];
+	return {
+		versions: [],
+		allowPreview: inputs.allowPreview,
+	};
 }
 
-async function resolveRequestedVersions(
-	inputs: ActionInputs,
-): Promise<VersionSet> {
-	const sdkVersions = await resolveSdkVersions(inputs);
+async function resolveRequestedVersions(inputs: ActionInputs): Promise<{
+	versions: VersionSet;
+	sdkAllowPreview: boolean;
+	allowPreview: boolean;
+}> {
+	const sdkResult = await resolveSdkVersions(inputs);
 	const runtimeVersions = parseVersions(inputs.runtimeInput);
 	const aspnetcoreVersions = parseVersions(inputs.aspnetcoreInput);
 
 	return {
-		sdk: sdkVersions,
-		runtime: runtimeVersions,
-		aspnetcore: aspnetcoreVersions,
+		versions: {
+			sdk: sdkResult.versions,
+			runtime: runtimeVersions,
+			aspnetcore: aspnetcoreVersions,
+		},
+		sdkAllowPreview: sdkResult.allowPreview,
+		allowPreview: inputs.allowPreview,
 	};
 }
 
@@ -221,8 +243,8 @@ export async function run(): Promise<void> {
 		const inputs = readInputs();
 		const requestedVersions = await resolveRequestedVersions(inputs);
 
-		ensureRequestedVersions(requestedVersions);
-		await fetchAndCacheReleaseInfo(inputs.allowPreview);
+		ensureRequestedVersions(requestedVersions.versions);
+		await fetchAndCacheReleaseInfo();
 
 		// Remove redundant versions
 		const deduplicated = await deduplicateVersions(requestedVersions);

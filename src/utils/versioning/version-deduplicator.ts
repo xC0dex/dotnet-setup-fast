@@ -3,27 +3,37 @@ import type { VersionSet } from '../../types';
 import { getSdkIncludedVersions } from './sdk-runtime-mapper';
 import { resolveVersion } from './version-resolver';
 
+export interface VersionResolutionContext {
+	versions: VersionSet;
+	sdkAllowPreview?: boolean;
+	allowPreview?: boolean;
+}
+
 /**
  * Remove redundant versions based on .NET hierarchy:
  * SDK > ASP.NET Core Runtime > .NET Runtime
  */
 export async function deduplicateVersions(
-	versions: VersionSet,
+	context: VersionResolutionContext,
 ): Promise<VersionSet> {
+	const { versions } = context;
+	const sdkAllowPreview = context.sdkAllowPreview ?? false;
+	const allowPreview = context.allowPreview ?? false;
+
 	// Resolve all wildcards to concrete versions
 	const resolvedSdk = versions.sdk.map((v) => ({
 		original: v,
-		resolved: resolveVersion(v, 'sdk'),
+		resolved: resolveVersion(v, 'sdk', sdkAllowPreview),
 	}));
 
 	const resolvedRuntime = versions.runtime.map((v) => ({
 		original: v,
-		resolved: resolveVersion(v, 'runtime'),
+		resolved: resolveVersion(v, 'runtime', allowPreview),
 	}));
 
 	const resolvedAspnetcore = versions.aspnetcore.map((v) => ({
 		original: v,
-		resolved: resolveVersion(v, 'aspnetcore'),
+		resolved: resolveVersion(v, 'aspnetcore', allowPreview),
 	}));
 
 	// Extract resolved versions as sets for fast lookup

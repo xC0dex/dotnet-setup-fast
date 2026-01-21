@@ -23,9 +23,11 @@ describe('deduplicateVersions', () => {
 		);
 
 		const result = await deduplicateVersions({
-			sdk: ['10.0.100'],
-			runtime: ['8.0.0'],
-			aspnetcore: ['7.0.0'],
+			versions: {
+				sdk: ['10.0.100'],
+				runtime: ['8.0.0'],
+				aspnetcore: ['7.0.0'],
+			},
 		});
 
 		expect(result).toEqual({
@@ -41,9 +43,11 @@ describe('deduplicateVersions', () => {
 		);
 
 		const result = await deduplicateVersions({
-			sdk: [],
-			runtime: ['8.0.0'],
-			aspnetcore: ['8.0.0'],
+			versions: {
+				sdk: [],
+				runtime: ['8.0.0'],
+				aspnetcore: ['8.0.0'],
+			},
 		});
 
 		expect(result).toEqual({
@@ -59,9 +63,11 @@ describe('deduplicateVersions', () => {
 		);
 
 		const result = await deduplicateVersions({
-			sdk: ['8.0.100'],
-			runtime: ['8.0.100'],
-			aspnetcore: [],
+			versions: {
+				sdk: ['8.0.100'],
+				runtime: ['8.0.100'],
+				aspnetcore: [],
+			},
 		});
 
 		expect(result).toEqual({
@@ -77,9 +83,11 @@ describe('deduplicateVersions', () => {
 		);
 
 		const result = await deduplicateVersions({
-			sdk: ['8.0.100'],
-			runtime: [],
-			aspnetcore: ['8.0.100'],
+			versions: {
+				sdk: ['8.0.100'],
+				runtime: [],
+				aspnetcore: ['8.0.100'],
+			},
 		});
 
 		expect(result).toEqual({
@@ -96,9 +104,11 @@ describe('deduplicateVersions', () => {
 		});
 
 		const result = await deduplicateVersions({
-			sdk: [],
-			runtime: ['8.0.23', '8.0.x'],
-			aspnetcore: [],
+			versions: {
+				sdk: [],
+				runtime: ['8.0.23', '8.0.x'],
+				aspnetcore: [],
+			},
 		});
 
 		expect(result).toEqual({
@@ -118,9 +128,11 @@ describe('deduplicateVersions', () => {
 		);
 
 		const result = await deduplicateVersions({
-			sdk: ['10.x.x', '9.0.100'],
-			runtime: ['8.0.23', '8.0.x', '7.0.0'],
-			aspnetcore: ['8.0.23'],
+			versions: {
+				sdk: ['10.x.x', '9.0.100'],
+				runtime: ['8.0.23', '8.0.x', '7.0.0'],
+				aspnetcore: ['8.0.23'],
+			},
 		});
 
 		expect(result).toEqual({
@@ -136,9 +148,11 @@ describe('deduplicateVersions', () => {
 		);
 
 		const result = await deduplicateVersions({
-			sdk: ['8.0.100'],
-			runtime: ['8.0.100'],
-			aspnetcore: ['8.0.100'],
+			versions: {
+				sdk: ['8.0.100'],
+				runtime: ['8.0.100'],
+				aspnetcore: ['8.0.100'],
+			},
 		});
 
 		expect(result).toEqual({
@@ -154,9 +168,11 @@ describe('deduplicateVersions', () => {
 		);
 
 		const result = await deduplicateVersions({
-			sdk: ['10.0.100', '9.0.100'],
-			runtime: ['10.0.100', '8.0.0'],
-			aspnetcore: ['9.0.100', '7.0.0'],
+			versions: {
+				sdk: ['10.0.100', '9.0.100'],
+				runtime: ['10.0.100', '8.0.0'],
+				aspnetcore: ['9.0.100', '7.0.0'],
+			},
 		});
 
 		expect(result).toEqual({
@@ -168,9 +184,11 @@ describe('deduplicateVersions', () => {
 
 	it('should handle empty inputs', async () => {
 		const result = await deduplicateVersions({
-			sdk: [],
-			runtime: [],
-			aspnetcore: [],
+			versions: {
+				sdk: [],
+				runtime: [],
+				aspnetcore: [],
+			},
 		});
 
 		expect(result).toEqual({
@@ -188,9 +206,11 @@ describe('deduplicateVersions', () => {
 		});
 
 		const result = await deduplicateVersions({
-			sdk: ['10.0.100', '10.x', '10.0.x'],
-			runtime: [],
-			aspnetcore: [],
+			versions: {
+				sdk: ['10.x', '10.0.x', '10.0.100'],
+				runtime: [],
+				aspnetcore: [],
+			},
 		});
 
 		expect(result).toEqual({
@@ -209,9 +229,11 @@ describe('deduplicateVersions', () => {
 		);
 
 		const result = await deduplicateVersions({
-			sdk: [],
-			runtime: ['8.x'],
-			aspnetcore: ['8.0.x'],
+			versions: {
+				sdk: [],
+				runtime: ['8.x'],
+				aspnetcore: ['8.0.x'],
+			},
 		});
 
 		expect(result).toEqual({
@@ -227,9 +249,11 @@ describe('deduplicateVersions', () => {
 		);
 
 		const result = await deduplicateVersions({
-			sdk: ['10.0.100', '9.0.100', '8.0.100'],
-			runtime: ['7.0.0', '6.0.0'],
-			aspnetcore: [],
+			versions: {
+				sdk: ['10.0.100', '9.0.100', '8.0.100'],
+				runtime: ['7.0.0', '6.0.0'],
+				aspnetcore: [],
+			},
 		});
 
 		expect(result).toEqual({
@@ -245,9 +269,11 @@ describe('deduplicateVersions', () => {
 		);
 
 		const result = await deduplicateVersions({
-			sdk: ['10.0.100'],
-			runtime: ['8.0.0'],
-			aspnetcore: ['8.0.0'],
+			versions: {
+				sdk: ['10.0.100'],
+				runtime: ['8.0.0'],
+				aspnetcore: ['8.0.0'],
+			},
 		});
 
 		expect(result).toEqual({
@@ -263,9 +289,11 @@ describe('deduplicateVersions', () => {
 		);
 
 		const result = await deduplicateVersions({
-			sdk: ['10.0.100', '9.0.100'],
-			runtime: ['8.0.0', '7.0.0'],
-			aspnetcore: ['6.0.0'],
+			versions: {
+				sdk: ['10.0.100', '9.0.100'],
+				runtime: ['8.0.0', '7.0.0'],
+				aspnetcore: ['6.0.0'],
+			},
 		});
 
 		expect(result).toEqual({
@@ -291,9 +319,11 @@ describe('deduplicateVersions', () => {
 		);
 
 		const result = await deduplicateVersions({
-			sdk: ['7.0.100'],
-			runtime: ['7.0.0', '6.0.21'],
-			aspnetcore: ['7.0.0'],
+			versions: {
+				sdk: ['7.0.100'],
+				runtime: ['7.0.0', '6.0.21'],
+				aspnetcore: ['7.0.0'],
+			},
 		});
 
 		expect(result).toEqual({
@@ -321,15 +351,61 @@ describe('deduplicateVersions', () => {
 		);
 
 		const result = await deduplicateVersions({
-			sdk: ['7.0.100', '8.0.100'],
-			runtime: ['7.0.0', '8.0.0', '6.0.21'],
-			aspnetcore: ['7.0.0', '8.0.0'],
+			versions: {
+				sdk: ['7.0.100', '8.0.100'],
+				runtime: ['7.0.0', '8.0.0', '6.0.21'],
+				aspnetcore: ['7.0.0', '8.0.0'],
+			},
 		});
 
 		expect(result).toEqual({
 			sdk: ['7.0.100', '8.0.100'],
 			runtime: ['6.0.21'], // 7.0.0 and 8.0.0 removed (included in SDKs)
 			aspnetcore: [], // Both removed (included in SDKs)
+		});
+	});
+
+	it('should deduplicate aspnetcore when preview SDK with allowPrerelease includes it', async () => {
+		// Mock version resolver to return preview versions when allowPreview is true
+		vi.mocked(versionResolver.resolveVersion).mockImplementation(
+			(version, type, allowPreview) => {
+				if (version === 'x.x.x' && type === 'sdk' && allowPreview) {
+					return '11.0.100-preview.1';
+				}
+				if (version === 'latest' && type === 'aspnetcore' && allowPreview) {
+					return '11.0.0-preview.1';
+				}
+				return version;
+			},
+		);
+
+		// Mock that preview SDK 11.0.100-preview.1 includes aspnetcore 11.0.0-preview.1
+		vi.mocked(sdkRuntimeMapper.getSdkIncludedVersions).mockImplementation(
+			async (sdkVersion) => {
+				if (sdkVersion === '11.0.100-preview.1') {
+					return {
+						runtime: '11.0.0-preview.1',
+						aspnetcore: '11.0.0-preview.1',
+					};
+				}
+				return { runtime: null, aspnetcore: null };
+			},
+		);
+
+		const result = await deduplicateVersions({
+			versions: {
+				sdk: ['x.x.x'], // Resolves to 11.0.100-preview.1
+				runtime: [],
+				aspnetcore: ['latest'], // Resolves to 11.0.0-preview.1
+			},
+			sdkAllowPreview: true, // From global.json allowPrerelease
+			allowPreview: true, // From Action input allow-preview
+		});
+
+		expect(result).toEqual({
+			sdk: ['11.0.100-preview.1'],
+			runtime: [],
+			aspnetcore: [], // Removed because included in SDK
 		});
 	});
 });

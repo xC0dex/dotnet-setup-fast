@@ -619,77 +619,68 @@ describe('resolveVersion', () => {
 	});
 
 	it('should include preview releases when allow-preview is enabled for latest', () => {
-		setCachedReleases(
-			[
-				{
-					'channel-version': '11.0',
-					'latest-sdk': '11.0.100-preview.1',
-					'latest-release': '11.0.0-preview.1',
-					'release-type': 'lts',
-					'support-phase': 'preview',
-				},
-				{
-					'channel-version': '10.0',
-					'latest-sdk': '10.0.402',
-					'latest-release': '10.0.2',
-					'release-type': 'sts',
-					'support-phase': 'active',
-				},
-			],
-			true,
-		);
+		setCachedReleases([
+			{
+				'channel-version': '11.0',
+				'latest-sdk': '11.0.100-preview.1',
+				'latest-release': '11.0.0-preview.1',
+				'release-type': 'lts',
+				'support-phase': 'preview',
+			},
+			{
+				'channel-version': '10.0',
+				'latest-sdk': '10.0.402',
+				'latest-release': '10.0.2',
+				'release-type': 'sts',
+				'support-phase': 'active',
+			},
+		]);
 
-		const result = resolveVersion('latest', 'sdk');
+		const result = resolveVersion('latest', 'sdk', true);
 		expect(result).toBe('11.0.100-preview.1');
 	});
 
 	it('should include preview releases when allow-preview is enabled for lts', () => {
-		setCachedReleases(
-			[
-				{
-					'channel-version': '11.0',
-					'latest-sdk': '11.0.100-preview.1',
-					'latest-release': '11.0.0-preview.1',
-					'release-type': 'lts',
-					'support-phase': 'preview',
-				},
-				{
-					'channel-version': '9.0',
-					'latest-sdk': '9.0.500',
-					'latest-release': '9.0.5',
-					'release-type': 'lts',
-					'support-phase': 'active',
-				},
-			],
-			true,
-		);
+		setCachedReleases([
+			{
+				'channel-version': '11.0',
+				'latest-sdk': '11.0.100-preview.1',
+				'latest-release': '11.0.0-preview.1',
+				'release-type': 'lts',
+				'support-phase': 'preview',
+			},
+			{
+				'channel-version': '9.0',
+				'latest-sdk': '9.0.500',
+				'latest-release': '9.0.5',
+				'release-type': 'lts',
+				'support-phase': 'active',
+			},
+		]);
 
-		const result = resolveVersion('lts', 'sdk');
+		const result = resolveVersion('lts', 'sdk', true);
 		expect(result).toBe('11.0.100-preview.1');
 	});
 
 	it('should include preview releases when allow-preview is enabled for sts', () => {
-		setCachedReleases(
-			[
-				{
-					'channel-version': '11.0',
-					'latest-sdk': '11.0.100-preview.1',
-					'latest-release': '11.0.0-preview.1',
-					'release-type': 'sts',
-					'support-phase': 'preview',
-				},
-				{
-					'channel-version': '10.0',
-					'latest-sdk': '10.0.402',
-					'latest-release': '10.0.2',
-					'release-type': 'sts',
-					'support-phase': 'active',
-				},
-			],
-			true,
-		);
+		setCachedReleases([
+			{
+				'channel-version': '11.0',
+				'latest-sdk': '11.0.100-preview.1',
+				'latest-release': '11.0.0-preview.1',
+				'release-type': 'sts',
+				'support-phase': 'preview',
+			},
+			{
+				'channel-version': '10.0',
+				'latest-sdk': '10.0.402',
+				'latest-release': '10.0.2',
+				'release-type': 'sts',
+				'support-phase': 'active',
+			},
+		]);
 
-		const result = resolveVersion('sts', 'sdk');
+		const result = resolveVersion('sts', 'sdk', true);
 		expect(result).toBe('11.0.100-preview.1');
 	});
 });

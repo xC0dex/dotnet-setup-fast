@@ -11,10 +11,17 @@ interface GlobalJson {
 	};
 }
 
+export interface GlobalJsonResult {
+	version: string;
+	allowPrerelease: boolean;
+}
+
 /**
  * Read and parse global.json file to extract SDK version
  */
-export async function readGlobalJson(filePath: string): Promise<string | null> {
+export async function readGlobalJson(
+	filePath: string,
+): Promise<GlobalJsonResult | null> {
 	try {
 		core.debug(`Attempting to read global.json from: ${filePath}`);
 		const content = await fs.readFile(filePath, 'utf-8');
@@ -36,9 +43,18 @@ export async function readGlobalJson(filePath: string): Promise<string | null> {
 			throw new Error(`Invalid JSON in global.json: ${errorMsg}`);
 		}
 
+		const allowPrerelease = parsed.sdk?.allowPrerelease ?? false;
+
+		// If no version is specified, treat as x.x.x (latest available)
+		// allowPrerelease determines if preview releases are included
 		if (!parsed.sdk?.version) {
-			core.warning('global.json found but sdk.version is missing');
-			return null;
+			core.info(
+				`No SDK version specified in global.json, using latest ${allowPrerelease ? '(including preview)' : 'stable'}`,
+			);
+			return {
+				version: 'x.x.x',
+				allowPrerelease,
+			};
 		}
 
 		const version = parsed.sdk.version;
@@ -66,7 +82,6 @@ export async function readGlobalJson(filePath: string): Promise<string | null> {
 
 		const prereleaseTag = match[2];
 		const isPreview = !!prereleaseTag;
-		const allowPrerelease = parsed.sdk.allowPrerelease ?? false;
 
 		// Enforce allowPrerelease requirement for preview versions
 		if (isPreview && !allowPrerelease) {
@@ -88,7 +103,10 @@ export async function readGlobalJson(filePath: string): Promise<string | null> {
 			);
 		}
 
-		return resolvedVersion;
+		return {
+			version: resolvedVersion,
+			allowPrerelease,
+		};
 	} catch (error) {
 		if (error instanceof Error && 'code' in error && error.code === 'ENOENT') {
 			core.debug(`global.json not found at: ${filePath}`);
