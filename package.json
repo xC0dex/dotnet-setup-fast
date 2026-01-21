@@ -22,9 +22,9 @@
 		"build": "tsc && vite build",
 		"test": "vitest run",
 		"test:watch": "vitest",
-		"format": "biome format --write",
+		"format": "prettier --write . && biome format --write",
 		"lint": "biome lint --write",
-		"format:ci": "biome format",
+		"format:ci": "prettier --check . && biome format",
 		"lint:ci": "biome lint",
 		"validate": "pnpm format && pnpm lint && pnpm build && pnpm test"
 	},
@@ -39,6 +39,7 @@
 	"devDependencies": {
 		"@biomejs/biome": "2.3.11",
 		"@types/node": "25.0.9",
+		"prettier": "3.8.0",
 		"typescript": "5.9.3",
 		"vite": "7.3.1",
 		"vitest": "4.0.17"

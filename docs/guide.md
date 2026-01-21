@@ -147,6 +147,7 @@ You can also use the `allow-preview` parameter with keywords to automatically ge
 ```
 
 **When to use `allow-preview`:**
+
 - Testing against upcoming .NET versions before GA
 - Validating compatibility with preview releases
 
@@ -166,6 +167,7 @@ Caching is enabled by default and dramatically speeds up subsequent workflow run
 4. **Fresh Download:** If no cache or version changed, .NET is downloaded and cached
 
 **Important:** The cache key uses the **resolved version**, not the input pattern. If you specify `10.x.x` and a new patch `10.0.106` is released, the action will:
+
 - Resolve `10.x.x` → `10.0.106` (new version)
 - Generate new cache key for `10.0.106`
 - Miss the old cache (was for `10.0.105`)
@@ -179,7 +181,7 @@ This ensures you always get the latest matching version without stale caches.
 - uses: fast-actions/setup-dotnet@v1
   with:
     sdk-version: '9.0.100'
-    cache: true  # Default, can be omitted
+    cache: true # Default, can be omitted
 ```
 
 ### Disable Caching
@@ -216,6 +218,7 @@ The action respects `global.json` for SDK version resolution, including `rollFor
 ### Basic Usage
 
 **global.json:**
+
 ```json
 {
   "sdk": {
@@ -225,6 +228,7 @@ The action respects `global.json` for SDK version resolution, including `rollFor
 ```
 
 **Workflow:**
+
 ```yaml
 - uses: fast-actions/setup-dotnet@v1
 ```
@@ -236,6 +240,7 @@ If `sdk-version` input is provided, it takes precedence over `global.json`.
 `rollForward` controls how the SDK version is resolved. The action translates these policies into wildcard patterns:
 
 **Disable (exact match):**
+
 ```json
 {
   "sdk": {
@@ -244,9 +249,11 @@ If `sdk-version` input is provided, it takes precedence over `global.json`.
   }
 }
 ```
+
 Installs exactly `9.0.100`.
 
 **Patch (latest patch):**
+
 ```json
 {
   "sdk": {
@@ -255,9 +262,11 @@ Installs exactly `9.0.100`.
   }
 }
 ```
+
 Resolves to `9.0.x` (latest patch in 9.0).
 
 **Feature (latest feature band):**
+
 ```json
 {
   "sdk": {
@@ -266,9 +275,11 @@ Resolves to `9.0.x` (latest patch in 9.0).
   }
 }
 ```
+
 Resolves to `9.0.x` (latest feature band in 9.0).
 
 **Minor (latest minor):**
+
 ```json
 {
   "sdk": {
@@ -277,9 +288,11 @@ Resolves to `9.0.x` (latest feature band in 9.0).
   }
 }
 ```
+
 Resolves to `9.x.x` (latest minor in 9.x).
 
 **Major (latest major):**
+
 ```json
 {
   "sdk": {
@@ -288,6 +301,7 @@ Resolves to `9.x.x` (latest minor in 9.x).
   }
 }
 ```
+
 Resolves to `x.x.x` (latest available version).
 
 ### Preview Versions in global.json
@@ -322,6 +336,7 @@ Without `allowPrerelease`, the action throws an error to prevent accidental prev
 **Scenario:** Build with the latest SDK, but test against multiple runtime versions to ensure compatibility.
 
 **Workflow:**
+
 ```yaml
 name: Multi-Target Tests
 
@@ -332,7 +347,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-      
+
       - uses: fast-actions/setup-dotnet@v1
         with:
           sdk-version: 'latest'
@@ -340,16 +355,16 @@ jobs:
             9.0.0
             8.0.0
             7.0.0
-      
+
       - name: Build with latest SDK
         run: dotnet build
-      
+
       - name: Test on .NET 9
         run: dotnet test --framework net9.0
-      
+
       - name: Test on .NET 8
         run: dotnet test --framework net8.0
-      
+
       - name: Test on .NET 7
         run: dotnet test --framework net7.0
 ```
@@ -361,6 +376,7 @@ jobs:
 **Scenario:** Monorepo with services using different .NET versions.
 
 **Workflow:**
+
 ```yaml
 name: Monorepo CI
 
@@ -371,28 +387,29 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-      
+
       - uses: fast-actions/setup-dotnet@v1
         with:
           sdk-version: |
             9.0.100
             8.0.400
             7.0.200
-      
+
       - name: Build Service A (.NET 9)
         working-directory: ./services/service-a
         run: dotnet build
-      
+
       - name: Build Service B (.NET 8)
         working-directory: ./services/service-b
         run: dotnet build
-      
+
       - name: Build Service C (.NET 7)
         working-directory: ./services/service-c
         run: dotnet build
 ```
 
-**Benefits:** 
+**Benefits:**
+
 - All SDKs download in parallel
 - Single action call for entire monorepo
 - Avoids redundant installations
@@ -402,6 +419,7 @@ jobs:
 **Scenario:** Ensure your app works on Windows, Linux, and macOS.
 
 **Workflow:**
+
 ```yaml
 name: Cross-Platform
 
@@ -415,15 +433,16 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v6
-      
+
       - uses: fast-actions/setup-dotnet@v1
         with:
           sdk-version: 'lts'
-      
+
       - run: dotnet test
 ```
 
 **Benefits:**
+
 - Caching works per OS
 - Parallel execution across platforms
 - Same action configuration everywhere
@@ -443,6 +462,7 @@ jobs:
 **Symptoms:** Action downloads .NET every time despite caching enabled.
 
 **Possible causes:**
+
 - Cache key changed (different versions, platform, or architecture)
 - GitHub Actions cache expired (7 days unused)
 - Cache storage limit reached (10 GB per repository)

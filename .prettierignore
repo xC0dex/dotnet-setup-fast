@@ -1,0 +1,4 @@
+*.json
+*.ts
+dist/
+pnpm-lock.yaml
