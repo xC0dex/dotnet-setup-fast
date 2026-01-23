@@ -3,6 +3,7 @@ import * as core from '@actions/core';
 import * as crypto from 'node:crypto';
 import { getDotNetInstallDirectory } from '../installer';
 import { getArchitecture, getPlatform } from './platform-utils';
+import * as fs from 'node:fs';
 
 export interface CacheVersions {
 	sdk: string[];
@@ -67,6 +68,22 @@ export async function saveCache(cacheKey: string): Promise<void> {
 
 	core.info(`Saving cache: ${cacheKey}`);
 	core.info(`Cache path: ${installDir}`);
+
+	// Debug: Check if directory exists
+	const directoryExists = fs.existsSync(installDir);
+	core.info(`Directory exists: ${directoryExists}`);
+
+	if (directoryExists) {
+		try {
+			const stats = fs.statSync(installDir);
+			core.info(`Directory is valid: ${stats.isDirectory()}`);
+		} catch (error) {
+			const errorMsg = error instanceof Error ? error.message : String(error);
+			core.warning(`Failed to read directory: ${errorMsg}`);
+		}
+	} else {
+		core.warning(`Directory does not exist: ${installDir}`);
+	}
 
 	try {
 		await cache.saveCache([installDir], cacheKey);
