@@ -119,7 +119,7 @@ describe('readGlobalJson', () => {
 		await fs.writeFile(testFile, content, 'utf-8');
 
 		const version = await readGlobalJson(testFile);
-		expect(version).toBe('x.x.x');
+		expect(version).toBe('latest');
 	});
 
 	it('should apply rollForward: latestMajor policy', async () => {
@@ -132,7 +132,7 @@ describe('readGlobalJson', () => {
 		await fs.writeFile(testFile, content, 'utf-8');
 
 		const version = await readGlobalJson(testFile);
-		expect(version).toBe('x.x.x');
+		expect(version).toBe('latest');
 	});
 
 	it('should not apply rollForward: disable policy', async () => {
@@ -176,14 +176,14 @@ describe('readGlobalJson', () => {
 		);
 	});
 
-	it('should return null for missing sdk.version', async () => {
+	it('should return x.x.x for missing sdk.version', async () => {
 		const content = JSON.stringify({
 			sdk: {},
 		});
 		await fs.writeFile(testFile, content, 'utf-8');
 
 		const version = await readGlobalJson(testFile);
-		expect(version).toBeNull();
+		expect(version).toBe('latest');
 	});
 
 	it('should return null for missing sdk section', async () => {
@@ -300,7 +300,7 @@ describe('readGlobalJson', () => {
 		await fs.writeFile(testFile, content, 'utf-8');
 
 		const version = await readGlobalJson(testFile);
-		expect(version).toBe('x.x.x');
+		expect(version).toBe('latest');
 	});
 });
 
