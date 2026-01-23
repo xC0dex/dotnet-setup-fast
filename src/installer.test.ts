@@ -296,10 +296,10 @@ describe('downloadToCache', () => {
 		} as fsModule.Stats);
 		vi.spyOn(fs, 'readFileSync').mockReturnValue(Buffer.from('test'));
 		vi.spyOn(io, 'mkdirP').mockResolvedValue(undefined);
-		vi.spyOn(io, 'mv').mockResolvedValue(undefined);
-		vi.spyOn(toolCache, 'downloadTool').mockResolvedValue(
-			'/tmp/download.tar.gz',
-		);
+	vi.spyOn(io, 'cp').mockResolvedValue(undefined);
+	vi.spyOn(toolCache, 'downloadTool').mockResolvedValue(
+		'/tmp/download.tar.gz',
+	);
 
 		const mockResponse = {
 			releases: [
@@ -337,7 +337,7 @@ describe('downloadToCache', () => {
 		expect(io.mkdirP).toHaveBeenCalledWith(
 			'/runner/tool-cache/dotnet-archives',
 		);
-		expect(io.mv).toHaveBeenCalledWith('/tmp/download.tar.gz', archivePath);
+		expect(io.cp).toHaveBeenCalledWith('/tmp/download.tar.gz', archivePath);
 	});
 });
 
