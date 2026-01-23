@@ -77,6 +77,23 @@ export async function saveCache(cacheKey: string): Promise<void> {
 		try {
 			const stats = fs.statSync(installDir);
 			core.info(`Directory is valid: ${stats.isDirectory()}`);
+
+			// List directory contents to check if it's empty
+			const contents = fs.readdirSync(installDir);
+			core.info(`Directory contains ${contents.length} items`);
+
+			if (contents.length > 0) {
+				core.info(`First 5 items: ${contents.slice(0, 5).join(', ')}`);
+			} else {
+				core.warning('Directory is EMPTY - this is likely the problem!');
+			}
+
+			// Check if critical files exist
+			const dotnetBinary =
+				process.platform === 'win32' ? 'dotnet.exe' : 'dotnet';
+			const binaryPath = `${installDir}/${dotnetBinary}`;
+			const binaryExists = fs.existsSync(binaryPath);
+			core.info(`${dotnetBinary} exists: ${binaryExists}`);
 		} catch (error) {
 			const errorMsg = error instanceof Error ? error.message : String(error);
 			core.warning(`Failed to read directory: ${errorMsg}`);
@@ -85,8 +102,12 @@ export async function saveCache(cacheKey: string): Promise<void> {
 		core.warning(`Directory does not exist: ${installDir}`);
 	}
 
+	// Normalize path for cache (use forward slashes)
+	const normalizedPath = installDir.replace(/\\/g, '/');
+	core.info(`Normalized cache path: ${normalizedPath}`);
+
 	try {
-		await cache.saveCache([installDir], cacheKey);
+		await cache.saveCache([normalizedPath], cacheKey);
 	} catch (error) {
 		const errorMsg = error instanceof Error ? error.message : String(error);
 
