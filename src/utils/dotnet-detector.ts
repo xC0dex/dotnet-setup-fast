@@ -171,12 +171,11 @@ export function isVersionInstalled(
 	type: DotnetType,
 	installed: InstalledVersions,
 ): boolean {
-	const installedList =
-		type === 'sdk'
-			? installed.sdk
-			: type === 'runtime'
-				? installed.runtime
-				: installed.aspnetcore;
-
-	return installedList.includes(version);
+	if (type === 'sdk') {
+		return installed.sdk.includes(version);
+	}
+	if (type === 'runtime') {
+		return installed.runtime.includes(version);
+	}
+	return installed.aspnetcore.includes(version);
 }
