@@ -41,12 +41,10 @@ export async function readGlobalJson(filePath: string): Promise<string | null> {
 		const version = parsed.sdk?.version;
 		const rollForward = parsed.sdk?.rollForward;
 
-		// If version was missing, return x.x.x directly without validation
+		// If version was missing, return latest directly without validation
 		if (!version) {
-			core.debug(
-				'SDK version missing in global.json, resolving to x.x.x (latest)',
-			);
-			return 'x.x.x';
+			core.debug('SDK version missing in global.json, resolving to latest');
+			return 'latest';
 		}
 
 		// Validate version format - must be full version number (e.g., 10.0.100)

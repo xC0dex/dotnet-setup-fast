@@ -183,7 +183,7 @@ describe('readGlobalJson', () => {
 		await fs.writeFile(testFile, content, 'utf-8');
 
 		const version = await readGlobalJson(testFile);
-		expect(version).toBe('x.x.x');
+		expect(version).toBe('latest');
 	});
 
 	it('should return null for missing sdk section', async () => {
