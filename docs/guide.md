@@ -65,6 +65,64 @@ The action automatically skips redundant installations. If the SDK already inclu
 
 ---
 
+## System Detection and DOTNET_ROOT
+
+The action intelligently handles pre-installed .NET versions on the system to ensure consistent behavior.
+
+### How it works
+
+**All requested versions already installed:**
+
+- Action detects that all versions are present on the system
+- No installation is performed
+- `DOTNET_ROOT` is **not set** (preinstalled .NET is used)
+- Workflow continues using the system's .NET installation
+
+**At least one version is missing:**
+
+- Action installs **all requested versions** (including already installed ones)
+- `DOTNET_ROOT` is set to point to the action's installation directory
+- This ensures `DOTNET_ROOT` always points to a complete, consistent location with all requested versions
+
+### Example Scenarios
+
+**Scenario 1: All versions present**
+
+```yaml
+- uses: fast-actions/setup-dotnet@v1
+  with:
+    sdk-version: '9.0.x'
+```
+
+If SDK 9.0.x (latest .NET 9 SDK) is already installed on the runner:
+
+- No download happens
+- Uses system .NET
+
+**Scenario 2: Partial installation**
+
+```yaml
+- uses: fast-actions/setup-dotnet@v1
+  with:
+    sdk-version: '9.0.100, 8.0.400'
+```
+
+If only 9.0.100 is on the system:
+
+- 📦 Installs **both** 9.0.100 and 8.0.400
+- 📍 Sets `DOTNET_ROOT` to action's directory
+- ✅ Guarantees all versions are in one location
+
+**Why this approach?**
+
+This ensures `DOTNET_ROOT` consistently points to a single location containing all requested versions, avoiding conflicts between different installation paths. We also avoid installing to the default .NET locations on the system, as this would require root permissions.
+
+### Non-Root Installation
+
+When the action installs .NET, it uses the standard GitHub Actions tool cache location (typically `$RUNNER_TOOL_CACHE`), which is a user-writable directory. No `sudo` or administrator rights are required.
+
+---
+
 ## Version Resolution
 
 ### Wildcards

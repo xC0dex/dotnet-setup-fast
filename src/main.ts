@@ -13,6 +13,10 @@ import {
 	saveCache,
 } from './utils/cache-utils';
 import {
+	getInstalledVersions,
+	isVersionInstalled,
+} from './utils/dotnet-detector';
+import {
 	getDefaultGlobalJsonPath,
 	readGlobalJson,
 } from './utils/global-json-reader';
@@ -68,6 +72,29 @@ function setActionOutputs(
 	core.setOutput('dotnet-version', versions);
 	core.setOutput('dotnet-path', installDir);
 	core.setOutput('cache-hit', cacheHit);
+}
+
+/**
+ * Check if ALL requested versions are already installed on the system
+ */
+async function areAllVersionsInstalled(
+	deduplicated: VersionSet,
+): Promise<boolean> {
+	const installed = await getInstalledVersions();
+
+	const allSdkInstalled = deduplicated.sdk.every((version) =>
+		isVersionInstalled(version, 'sdk', installed),
+	);
+
+	const allRuntimeInstalled = deduplicated.runtime.every((version) =>
+		isVersionInstalled(version, 'runtime', installed),
+	);
+
+	const allAspnetcoreInstalled = deduplicated.aspnetcore.every((version) =>
+		isVersionInstalled(version, 'aspnetcore', installed),
+	);
+
+	return allSdkInstalled && allRuntimeInstalled && allAspnetcoreInstalled;
 }
 
 /**
@@ -239,8 +266,18 @@ export async function run(): Promise<void> {
 		ensureRequestedVersions(requestedVersions);
 		await fetchAndCacheReleaseInfo();
 
-		// Remove redundant versions
 		const deduplicated = await deduplicateVersions(requestedVersions);
+
+		if (await areAllVersionsInstalled(deduplicated)) {
+			core.info(
+				'✅ All requested versions are already installed on the system',
+			);
+			return;
+		}
+
+		// At least one version is missing, so we install ALL versions ourselves
+		core.info('At least one requested version is not installed on the system');
+
 		// Try to restore from cache if enabled
 		if (inputs.cacheEnabled && (await tryRestoreFromCache(deduplicated))) {
 			return;
