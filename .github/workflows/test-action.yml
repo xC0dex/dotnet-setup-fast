@@ -131,7 +131,6 @@ jobs:
           sdk-version: '10.x'
           runtime-version: '9.x'
           aspnetcore-version: '9.x'
-          cache: ${{ matrix.os != 'windows-latest' }} # Caching not supported on Windows runners
 
       - name: Verify installation
         run: |
