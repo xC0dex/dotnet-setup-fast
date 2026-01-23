@@ -19,7 +19,12 @@
 		},
 		{
 			"matchDatasources": ["npm"],
-			"minimumReleaseAge": "3 days"
+			"minimumReleaseAge": "2 days"
+		},
+		{
+			"matchDatasources": ["npm"],
+			"matchUpdateTypes": ["patch"],
+			"groupName": "all patch npm dependencies"
 		}
 	]
 }

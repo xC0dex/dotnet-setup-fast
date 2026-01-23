@@ -7,8 +7,6 @@ Parallel downloads, automatic caching, and smart version resolution.
 ## Quickstart
 
 ```yaml
-- uses: actions/checkout@v4
-
 - uses: fast-actions/setup-dotnet@v1
   with:
     sdk-version: '10.x'
