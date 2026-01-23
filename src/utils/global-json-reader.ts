@@ -136,11 +136,11 @@ function applyRollForward(version: string, rollForward?: string): string {
 
 		case 'major':
 		// Official: Roll forward to next major version if needed
-		// Our implementation: Download latest major (8.0.100 -> x.x.x)
+		// Our implementation: Download latest major (8.0.100 -> latest)
 		case 'latestMajor':
 			// Official: Use highest major >= specified value
-			// Our implementation: Download latest major (8.0.100 -> x.x.x)
-			return 'x.x.x';
+			// Our implementation: Download latest major (8.0.100 -> latest)
+			return 'latest';
 
 		default:
 			core.warning(

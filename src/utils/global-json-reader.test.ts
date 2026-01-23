@@ -119,7 +119,7 @@ describe('readGlobalJson', () => {
 		await fs.writeFile(testFile, content, 'utf-8');
 
 		const version = await readGlobalJson(testFile);
-		expect(version).toBe('x.x.x');
+		expect(version).toBe('latest');
 	});
 
 	it('should apply rollForward: latestMajor policy', async () => {
@@ -132,7 +132,7 @@ describe('readGlobalJson', () => {
 		await fs.writeFile(testFile, content, 'utf-8');
 
 		const version = await readGlobalJson(testFile);
-		expect(version).toBe('x.x.x');
+		expect(version).toBe('latest');
 	});
 
 	it('should not apply rollForward: disable policy', async () => {
@@ -300,7 +300,7 @@ describe('readGlobalJson', () => {
 		await fs.writeFile(testFile, content, 'utf-8');
 
 		const version = await readGlobalJson(testFile);
-		expect(version).toBe('x.x.x');
+		expect(version).toBe('latest');
 	});
 });
 
