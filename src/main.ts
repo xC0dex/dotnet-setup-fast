@@ -266,13 +266,8 @@ export async function run(): Promise<void> {
 		ensureRequestedVersions(requestedVersions);
 		await fetchAndCacheReleaseInfo();
 
-		// Remove redundant versions
 		const deduplicated = await deduplicateVersions(requestedVersions);
 
-		// Check if ALL requested versions are already installed on the system
-		// If yes: do nothing and exit early (don't set DOTNET_ROOT)
-		// If no: install ALL versions ourselves (even if some are already installed)
-		// so that DOTNET_ROOT points to a location that contains everything
 		if (await areAllVersionsInstalled(deduplicated)) {
 			core.info(
 				'✅ All requested versions are already installed on the system',
