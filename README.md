@@ -98,7 +98,7 @@ Check out the [Migration Guide](https://github.com/fast-actions/setup-dotnet/blo
 | `dotnet-path`    | Path to .NET installation directory                           |
 | `cache-hit`      | Whether installation was restored from cache (`true`/`false`) |
 
-## Why I built `fast-actions/setup-dotnet`?
+## Motivation behind `fast-actions/setup-dotnet`
 
 I built this GitHub Action because I care a lot about workflow execution time. The official `actions/setup-dotnet` works great for most cases, but in my workflows it was consistently slower than I wanted (especially when the runner spends a bunch of time installing multiple SDKs/Runtimes).
 
