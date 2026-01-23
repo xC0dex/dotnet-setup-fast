@@ -232,7 +232,7 @@ This ensures you always run the exact same action code until you intentionally u
 
 ## global.json Support
 
-The action respects `global.json` for SDK version resolution, including `rollForward` policies.
+The action respects `global.json` for SDK version resolution, including `rollForward` policies and `allowPrerelease` settings. It follows the official .NET SDK global.json specification while adapting the behavior for CI/CD environments.
 
 ### Basic Usage
 
@@ -254,6 +254,22 @@ The action respects `global.json` for SDK version resolution, including `rollFor
 
 If `sdk-version` input is provided, it takes precedence over `global.json`.
 
+### Optional Version Field
+
+If no `version` is specified in global.json, the action defaults to `latest`:
+
+**global.json:**
+
+```json
+{
+  "sdk": {
+    "rollForward": "latestMajor"
+  }
+}
+```
+
+This installs the latest available SDK, respecting the `allow-preview` setting.
+
 ### rollForward Policies
 
 `rollForward` controls how the SDK version is resolved. The action translates these policies into wildcard patterns:
@@ -269,9 +285,9 @@ If `sdk-version` input is provided, it takes precedence over `global.json`.
 }
 ```
 
-Installs exactly `9.0.100`.
+Installs exactly `9.0.100` (no wildcards applied).
 
-**Patch (latest patch):**
+**Patch / latestPatch (latest patch):**
 
 ```json
 {
@@ -284,7 +300,7 @@ Installs exactly `9.0.100`.
 
 Resolves to `9.0.x` (latest patch in 9.0).
 
-**Feature (latest feature band):**
+**Feature / latestFeature (latest feature band):**
 
 ```json
 {
@@ -297,7 +313,7 @@ Resolves to `9.0.x` (latest patch in 9.0).
 
 Resolves to `9.0.x` (latest feature band in 9.0).
 
-**Minor (latest minor):**
+**Minor / latestMinor (latest minor):**
 
 ```json
 {
@@ -310,7 +326,7 @@ Resolves to `9.0.x` (latest feature band in 9.0).
 
 Resolves to `9.x.x` (latest minor in 9.x).
 
-**Major (latest major):**
+**Major / latestMajor (latest major):**
 
 ```json
 {
@@ -321,11 +337,13 @@ Resolves to `9.x.x` (latest minor in 9.x).
 }
 ```
 
-Resolves to `x.x.x` (latest available version).
+Resolves to `latest` (latest available version).
 
 ### Preview Versions in global.json
 
-Preview versions require `allowPrerelease: true`:
+Preview versions are fully supported. Use `allowPrerelease` to control whether preview releases are included when resolving versions:
+
+**With allowPrerelease:**
 
 ```json
 {
@@ -336,7 +354,30 @@ Preview versions require `allowPrerelease: true`:
 }
 ```
 
-Without `allowPrerelease`, the action throws an error to prevent accidental preview usage.
+**Without allowPrerelease (default):**
+
+```json
+{
+  "sdk": {
+    "version": "9.0.100",
+    "allowPrerelease": false
+  }
+}
+```
+
+**Example with rollForward:**
+
+```json
+{
+  "sdk": {
+    "version": "10.0.100",
+    "rollForward": "latestMajor",
+    "allowPrerelease": true
+  }
+}
+```
+
+This resolves to the latest available SDK, including preview releases.
 
 ### Custom global.json Path
 
@@ -345,6 +386,31 @@ Without `allowPrerelease`, the action throws an error to prevent accidental prev
   with:
     global-json: './src/MyProject/global.json'
 ```
+
+### Comments in global.json
+
+JSON with Comments (JSONC) is fully supported:
+
+```jsonc
+{
+  "sdk": {
+    // Install latest LTS version
+    "version": "8.0.100",
+    "rollForward": "latestFeature",
+  },
+}
+```
+
+### Validation
+
+The action validates global.json contents:
+
+**Valid formats:**
+
+- Full version: `9.0.100`
+- Preview version: `10.0.100-preview.1.24607.1`
+
+**Note:** Wildcards are not supported in the `version` field per the official .NET SDK specification. Use `rollForward` policies to achieve similar behavior.
 
 ---
 
