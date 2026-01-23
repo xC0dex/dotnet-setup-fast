@@ -13,6 +13,10 @@ import {
 	saveCache,
 } from './utils/cache-utils';
 import {
+	getInstalledVersions,
+	isVersionInstalled,
+} from './utils/dotnet-detector';
+import {
 	getDefaultGlobalJsonPath,
 	readGlobalJson,
 } from './utils/global-json-reader';
@@ -68,6 +72,47 @@ function setActionOutputs(
 	core.setOutput('dotnet-version', versions);
 	core.setOutput('dotnet-path', installDir);
 	core.setOutput('cache-hit', cacheHit);
+}
+
+/**
+ * Remove versions that are already installed on the system
+ */
+async function removeAlreadyInstalled(
+	deduplicated: VersionSet,
+): Promise<VersionSet> {
+	const installed = await getInstalledVersions();
+
+	const filteredSdk = deduplicated.sdk.filter((version) => {
+		if (isVersionInstalled(version, 'sdk', installed)) {
+			core.info(`Skipping SDK ${version} (already installed on system)`);
+			return false;
+		}
+		return true;
+	});
+
+	const filteredRuntime = deduplicated.runtime.filter((version) => {
+		if (isVersionInstalled(version, 'runtime', installed)) {
+			core.info(`Skipping Runtime ${version} (already installed on system)`);
+			return false;
+		}
+		return true;
+	});
+
+	const filteredAspnetcore = deduplicated.aspnetcore.filter((version) => {
+		if (isVersionInstalled(version, 'aspnetcore', installed)) {
+			core.info(
+				`Skipping ASP.NET Core ${version} (already installed on system)`,
+			);
+			return false;
+		}
+		return true;
+	});
+
+	return {
+		sdk: filteredSdk,
+		runtime: filteredRuntime,
+		aspnetcore: filteredAspnetcore,
+	};
 }
 
 /**
@@ -241,18 +286,35 @@ export async function run(): Promise<void> {
 
 		// Remove redundant versions
 		const deduplicated = await deduplicateVersions(requestedVersions);
-		// Try to restore from cache if enabled
-		if (inputs.cacheEnabled && (await tryRestoreFromCache(deduplicated))) {
+
+		// Remove versions that are already installed on the system
+		const toInstall = await removeAlreadyInstalled(deduplicated);
+
+		// Check if there's anything left to install
+		const hasVersionsToInstall =
+			toInstall.sdk.length > 0 ||
+			toInstall.runtime.length > 0 ||
+			toInstall.aspnetcore.length > 0;
+
+		if (!hasVersionsToInstall) {
+			core.info('All requested versions are already installed on the system');
+			const installDir = getDotNetInstallDirectory();
+			setActionOutputs('', installDir, false);
 			return;
 		}
 
-		const plan = buildInstallPlan(deduplicated);
-		core.info(`Installing: ${formatVersionPlan(deduplicated)}`);
+		// Try to restore from cache if enabled
+		if (inputs.cacheEnabled && (await tryRestoreFromCache(toInstall))) {
+			return;
+		}
+
+		const plan = buildInstallPlan(toInstall);
+		core.info(`Installing: ${formatVersionPlan(toInstall)}`);
 		const installations = await executeInstallPlan(plan);
 
 		// Save to cache if enabled
 		if (inputs.cacheEnabled) {
-			await tryToSaveCache(deduplicated);
+			await tryToSaveCache(toInstall);
 		}
 		setOutputsFromInstallations(installations, false);
 	} catch (error) {

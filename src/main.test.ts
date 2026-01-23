@@ -6,10 +6,12 @@ import type { InstallResult } from './installer';
 import { installDotNet } from './installer';
 import { run } from './main';
 import * as cacheUtils from './utils/cache-utils';
+import * as dotnetDetector from './utils/dotnet-detector';
 
 vi.mock('@actions/core');
 vi.mock('./installer');
 vi.mock('./utils/cache-utils');
+vi.mock('./utils/dotnet-detector');
 
 describe('main', () => {
 	const testDir = path.join(__dirname, '__test_main__');
@@ -25,6 +27,13 @@ describe('main', () => {
 		);
 		vi.mocked(cacheUtils.restoreCache).mockResolvedValue(false);
 		vi.mocked(cacheUtils.saveCache).mockResolvedValue(undefined);
+
+		// Mock dotnet detector - default to no installed versions
+		vi.mocked(dotnetDetector.getInstalledVersions).mockResolvedValue({
+			sdk: [],
+			runtime: [],
+			aspnetcore: [],
+		});
 	});
 
 	afterEach(async () => {
@@ -305,5 +314,102 @@ describe('main', () => {
 			version: '7.0.0',
 			type: 'runtime',
 		});
+	});
+
+	it('should skip already installed SDK version', async () => {
+		vi.mocked(core.getInput).mockImplementation((name: string) => {
+			if (name === 'sdk-version') return '10.0.402';
+			return '';
+		});
+		vi.mocked(dotnetDetector.getInstalledVersions).mockResolvedValue({
+			sdk: ['10.0.402'],
+			runtime: [],
+			aspnetcore: [],
+		});
+		vi.mocked(dotnetDetector.isVersionInstalled).mockReturnValue(true);
+
+		await run();
+
+		expect(installDotNet).not.toHaveBeenCalled();
+		expect(core.info).toHaveBeenCalledWith(
+			'Skipping SDK 10.0.402 (already installed on system)',
+		);
+		expect(core.info).toHaveBeenCalledWith(
+			'All requested versions are already installed on the system',
+		);
+	});
+
+	it('should skip already installed Runtime version', async () => {
+		vi.mocked(core.getInput).mockImplementation((name: string) => {
+			if (name === 'runtime-version') return '8.0.23';
+			return '';
+		});
+		vi.mocked(dotnetDetector.getInstalledVersions).mockResolvedValue({
+			sdk: [],
+			runtime: ['8.0.23'],
+			aspnetcore: [],
+		});
+		vi.mocked(dotnetDetector.isVersionInstalled).mockReturnValue(true);
+
+		await run();
+
+		expect(installDotNet).not.toHaveBeenCalled();
+		expect(core.info).toHaveBeenCalledWith(
+			'Skipping Runtime 8.0.23 (already installed on system)',
+		);
+		expect(core.info).toHaveBeenCalledWith(
+			'All requested versions are already installed on the system',
+		);
+	});
+
+	it('should install only non-installed versions when some are already installed', async () => {
+		vi.mocked(core.getInput).mockImplementation((name: string) => {
+			if (name === 'sdk-version') return '10.0.402, 9.0.500';
+			return '';
+		});
+		vi.mocked(dotnetDetector.getInstalledVersions).mockResolvedValue({
+			sdk: ['9.0.500'],
+			runtime: [],
+			aspnetcore: [],
+		});
+		vi.mocked(dotnetDetector.isVersionInstalled).mockImplementation(
+			(version: string) => version === '9.0.500',
+		);
+		vi.mocked(installDotNet).mockResolvedValue({
+			version: '10.0.402',
+			type: 'sdk',
+			path: '/path/to/sdk',
+		} as InstallResult);
+
+		await run();
+
+		expect(installDotNet).toHaveBeenCalledTimes(1);
+		expect(installDotNet).toHaveBeenCalledWith({
+			version: '10.0.402',
+			type: 'sdk',
+		});
+		expect(core.info).toHaveBeenCalledWith(
+			'Skipping SDK 9.0.500 (already installed on system)',
+		);
+	});
+
+	it('should skip installed ASP.NET Core runtime', async () => {
+		vi.mocked(core.getInput).mockImplementation((name: string) => {
+			if (name === 'aspnetcore-version') return '8.0.23';
+			return '';
+		});
+		vi.mocked(dotnetDetector.getInstalledVersions).mockResolvedValue({
+			sdk: [],
+			runtime: [],
+			aspnetcore: ['8.0.23'],
+		});
+		vi.mocked(dotnetDetector.isVersionInstalled).mockReturnValue(true);
+
+		await run();
+
+		expect(installDotNet).not.toHaveBeenCalled();
+		expect(core.info).toHaveBeenCalledWith(
+			'Skipping ASP.NET Core 8.0.23 (already installed on system)',
+		);
 	});
 });

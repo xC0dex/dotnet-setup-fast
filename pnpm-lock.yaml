@@ -14,6 +14,9 @@ importers:
       '@actions/core':
         specifier: 2.0.2
         version: 2.0.2
+      '@actions/exec':
+        specifier: 2.0.0
+        version: 2.0.0
       '@actions/io':
         specifier: 2.0.0
         version: 2.0.0
