@@ -21,6 +21,11 @@ import {
 	readGlobalJson,
 } from './utils/global-json-reader';
 import { parseVersions } from './utils/input-parser';
+import {
+	parseNuGetSourcesInput,
+	resolveNuGetConfigPath,
+	setupNuGetSources,
+} from './utils/nuget-sources';
 import { deduplicateVersions } from './utils/versioning/version-deduplicator';
 import { fetchAndCacheReleaseInfo } from './utils/versioning/version-resolver';
 
@@ -37,6 +42,7 @@ interface ActionInputs {
 	globalJsonInput: string;
 	cacheEnabled: boolean;
 	allowPreview: boolean;
+	nugetSources: string;
 }
 
 interface InstallPlanItem {
@@ -143,6 +149,14 @@ async function tryToSaveCache(deduplicated: VersionSet): Promise<void> {
 	await saveCache(cacheKey);
 }
 
+async function runNuGetSourcesSetup(inputs: ActionInputs): Promise<void> {
+	if (!inputs.nugetSources?.trim()) return;
+	const feeds = parseNuGetSourcesInput(inputs.nugetSources);
+	const workspace = process.env.GITHUB_WORKSPACE || process.cwd();
+	const { configPath, isNew } = resolveNuGetConfigPath(workspace);
+	await setupNuGetSources(feeds, configPath, isNew);
+}
+
 function readInputs(): ActionInputs {
 	return {
 		sdkInput: core.getInput('sdk-version'),
@@ -151,6 +165,7 @@ function readInputs(): ActionInputs {
 		globalJsonInput: core.getInput('global-json'),
 		cacheEnabled: core.getBooleanInput('cache'),
 		allowPreview: core.getBooleanInput('allow-preview'),
+		nugetSources: core.getInput('nuget-sources'),
 	};
 }
 
@@ -272,6 +287,7 @@ export async function run(): Promise<void> {
 			core.info(
 				'✅ All requested versions are already installed on the system',
 			);
+			await runNuGetSourcesSetup(inputs);
 			return;
 		}
 
@@ -280,6 +296,7 @@ export async function run(): Promise<void> {
 
 		// Try to restore from cache if enabled
 		if (inputs.cacheEnabled && (await tryRestoreFromCache(deduplicated))) {
+			await runNuGetSourcesSetup(inputs);
 			return;
 		}
 
@@ -291,6 +308,7 @@ export async function run(): Promise<void> {
 		if (inputs.cacheEnabled) {
 			await tryToSaveCache(deduplicated);
 		}
+		await runNuGetSourcesSetup(inputs);
 		setOutputsFromInstallations(installations, false);
 	} catch (error) {
 		if (error instanceof Error) {

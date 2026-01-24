@@ -34,6 +34,11 @@ inputs:
     required: false
     default: 'false'
 
+  nuget-sources:
+    description: 'NuGet package source(s) to add. One per line or comma-separated. Format: URL, or URL|TOKEN (username default nuget), or URL|TOKEN|USER. Example: https://api.nuget.org/v3/index.json or https://pkgs.dev.azure.com/.../nuget/v3/index.json|your-token or ...|token|myuser.'
+    required: false
+    default: ''
+
 outputs:
   dotnet-version:
     description: 'The installed .NET version'
