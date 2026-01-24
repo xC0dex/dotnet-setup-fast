@@ -25,6 +25,12 @@
 			"matchDatasources": ["npm"],
 			"matchUpdateTypes": ["patch"],
 			"groupName": "all patch npm dependencies"
+		},
+		{
+			"matchDatasources": ["npm"],
+			"matchDepNames": ["@node/types"],
+			"matchUpdateTypes": "major",
+			"enabled": false
 		}
 	]
 }
