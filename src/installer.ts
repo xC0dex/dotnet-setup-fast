@@ -200,27 +200,37 @@ export async function installDotNet(
 	const versionCachePath = getVersionCachePath(version, type);
 
 	// Check if already cached locally in per-version cache
+	core.debug(`${prefix} Checking local version cache: ${versionCachePath}`);
 	if (isVersionCachedLocally(version, type)) {
-		core.debug(`${prefix} Found in local version cache: ${versionCachePath}`);
+		core.info(`${prefix} Found in local version cache: ${versionCachePath}`);
 		await copyToInstallDir(versionCachePath, installDir, prefix);
 		configureEnvironment(installDir);
 		return { version, type, path: installDir, cacheHit: true };
 	}
+	core.debug(`${prefix} Not found in local version cache`);
 
 	// Try to restore from GitHub cache if enabled
 	if (cacheEnabled) {
+		core.debug(`${prefix} Attempting to restore from GitHub Actions cache`);
 		const cacheResult = await restoreVersionCache(
 			version,
 			type,
 			versionCachePath,
 		);
 		if (cacheResult.restored) {
-			core.debug(`${prefix} Restored from cache: ${versionCachePath}`);
+			core.info(
+				`${prefix} Restored from GitHub Actions cache: ${versionCachePath}`,
+			);
 			validateExtractedBinary(versionCachePath, platform);
 			await copyToInstallDir(versionCachePath, installDir, prefix);
 			configureEnvironment(installDir);
 			return { version, type, path: installDir, cacheHit: true };
 		}
+		core.debug(`${prefix} Not found in GitHub Actions cache`);
+	} else {
+		core.debug(
+			`${prefix} Cache disabled, skipping GitHub Actions cache restore`,
+		);
 	}
 
 	// Download and extract
@@ -234,11 +244,13 @@ export async function installDotNet(
 	validateExtractedBinary(extractedPath, platform);
 
 	// Copy to per-version cache directory
+	core.debug(`${prefix} Saving to local version cache: ${versionCachePath}`);
 	await io.mkdirP(path.dirname(versionCachePath));
 	await io.cp(extractedPath, versionCachePath, {
 		recursive: true,
 		copySourceDirectory: false,
 	});
+	core.debug(`${prefix} Saved to local version cache`);
 
 	// Copy to install directory
 	await copyToInstallDir(versionCachePath, installDir, prefix);
@@ -246,7 +258,10 @@ export async function installDotNet(
 
 	// Save to GitHub cache if enabled
 	if (cacheEnabled) {
+		core.debug(`${prefix} Saving to GitHub Actions cache`);
 		await saveVersionCache(version, type, versionCachePath);
+	} else {
+		core.debug(`${prefix} Cache disabled, skipping GitHub Actions cache save`);
 	}
 
 	return { version, type, path: installDir, cacheHit: false };

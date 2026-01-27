@@ -1,4 +1,5 @@
 import * as cache from '@actions/cache';
+import * as io from '@actions/io';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
 	generateVersionCacheKey,
@@ -12,6 +13,7 @@ import * as platformUtils from './platform-utils';
 
 // Mock dependencies
 vi.mock('@actions/cache');
+vi.mock('@actions/io');
 vi.mock('./platform-utils');
 
 describe('generateVersionCacheKey', () => {
@@ -77,6 +79,7 @@ describe('restoreVersionCache', () => {
 	it('should return restored:true when cache is restored', async () => {
 		vi.mocked(platformUtils.getPlatform).mockReturnValue('linux');
 		vi.mocked(platformUtils.getArchitecture).mockReturnValue('x64');
+		vi.mocked(io.mkdirP).mockResolvedValue();
 		vi.mocked(cache.restoreCache).mockResolvedValue(
 			'dotnet-linux-x64-sdk-10.0.102',
 		);
@@ -92,6 +95,7 @@ describe('restoreVersionCache', () => {
 			type: 'sdk',
 			restored: true,
 		});
+		expect(io.mkdirP).toHaveBeenCalledWith('/path/to');
 		expect(cache.restoreCache).toHaveBeenCalledWith(
 			['/path/to/cache'],
 			'dotnet-linux-x64-sdk-10.0.102',
@@ -101,6 +105,7 @@ describe('restoreVersionCache', () => {
 	it('should return restored:false when cache is not found', async () => {
 		vi.mocked(platformUtils.getPlatform).mockReturnValue('linux');
 		vi.mocked(platformUtils.getArchitecture).mockReturnValue('x64');
+		vi.mocked(io.mkdirP).mockResolvedValue();
 		vi.mocked(cache.restoreCache).mockResolvedValue(undefined);
 
 		const result = await restoreVersionCache(
@@ -114,11 +119,13 @@ describe('restoreVersionCache', () => {
 			type: 'sdk',
 			restored: false,
 		});
+		expect(io.mkdirP).toHaveBeenCalledWith('/path/to');
 	});
 
 	it('should return restored:false on cache restore error', async () => {
 		vi.mocked(platformUtils.getPlatform).mockReturnValue('linux');
 		vi.mocked(platformUtils.getArchitecture).mockReturnValue('x64');
+		vi.mocked(io.mkdirP).mockResolvedValue();
 		vi.mocked(cache.restoreCache).mockRejectedValue(new Error('Network error'));
 
 		const result = await restoreVersionCache(
@@ -132,6 +139,7 @@ describe('restoreVersionCache', () => {
 			type: 'sdk',
 			restored: false,
 		});
+		expect(io.mkdirP).toHaveBeenCalledWith('/path/to');
 	});
 });
 
@@ -143,6 +151,7 @@ describe('restoreVersionCaches', () => {
 	it('should restore multiple versions in parallel', async () => {
 		vi.mocked(platformUtils.getPlatform).mockReturnValue('linux');
 		vi.mocked(platformUtils.getArchitecture).mockReturnValue('x64');
+		vi.mocked(io.mkdirP).mockResolvedValue();
 		vi.mocked(cache.restoreCache)
 			.mockResolvedValueOnce('dotnet-linux-x64-sdk-10.0.102')
 			.mockResolvedValueOnce(undefined);
