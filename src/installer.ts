@@ -136,7 +136,7 @@ async function copyToInstallDir(
 	}
 }
 
-function configureEnvironment(installDir: string): void {
+export function configureEnvironment(installDir: string): void {
 	if (!process.env.PATH?.includes(installDir)) {
 		core.addPath(installDir);
 	}
