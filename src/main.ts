@@ -49,9 +49,6 @@ interface InstallPlanItem {
 	type: DotnetType;
 }
 
-/**
- * Format version plan for display
- */
 function formatVersionPlan(deduplicated: VersionSet): string {
 	const parts: string[] = [];
 	if (deduplicated.sdk.length > 0) {
@@ -66,9 +63,6 @@ function formatVersionPlan(deduplicated: VersionSet): string {
 	return parts.join(' | ');
 }
 
-/**
- * Set GitHub Action outputs
- */
 function setActionOutputs(
 	versions: string,
 	installDir: string,
@@ -79,10 +73,6 @@ function setActionOutputs(
 	core.setOutput('cache-hit', cacheHit);
 }
 
-/**
- * Check if ALL requested versions are already installed on the system
- * Checks both the installation directory (if it exists) and system dotnet
- */
 async function areAllVersionsInstalled(
 	deduplicated: VersionSet,
 ): Promise<boolean> {
@@ -221,9 +211,6 @@ async function executeInstallPlan(
 	return installations;
 }
 
-/**
- * Determine cache hit status from installation results
- */
 function getCacheHitStatusFromResults(
 	installations: InstallationResult[],
 ): CacheHitStatus {
@@ -242,9 +229,6 @@ function getCacheHitStatusFromResults(
 	return 'false';
 }
 
-/**
- * Sort installations by type order: SDK, Runtime, ASP.NET Core
- */
 function sortByType(installations: InstallationResult[]): InstallationResult[] {
 	const typeOrder: Record<DotnetType, number> = {
 		sdk: 0,
@@ -256,9 +240,6 @@ function sortByType(installations: InstallationResult[]): InstallationResult[] {
 	);
 }
 
-/**
- * Format version for display
- */
 function formatVersion(type: DotnetType, version: string): string {
 	const typeLabel =
 		type === 'sdk' ? 'SDK' : type === 'runtime' ? 'Runtime' : 'ASP.NET Core';
@@ -318,9 +299,6 @@ function setOutputsFromInstallations(
 	}
 }
 
-/**
- * Main entry point for the GitHub Action
- */
 export async function run(): Promise<void> {
 	try {
 		const inputs = readInputs();

@@ -5,10 +5,7 @@ import * as path from 'node:path';
 import type { DotnetType } from '../types';
 import { getArchitecture, getPlatform } from './platform-utils';
 
-/**
- * Generate a cache key for a specific .NET version
- * Format: dotnet-{platform}-{arch}-{type}-{version}
- */
+// Format: dotnet-{platform}-{arch}-{type}-{version}
 export function generateVersionCacheKey(
 	version: string,
 	type: DotnetType,
@@ -24,10 +21,6 @@ export interface VersionCacheResult {
 	restored: boolean;
 }
 
-/**
- * Try to restore a single .NET version from cache
- * @returns Object with version, type, and whether it was restored
- */
 export async function restoreVersionCache(
 	version: string,
 	type: DotnetType,
@@ -61,10 +54,6 @@ export async function restoreVersionCache(
 	}
 }
 
-/**
- * Restore multiple .NET versions from cache in parallel
- * @returns Array of results indicating which versions were restored
- */
 export async function restoreVersionCaches(
 	versions: Array<{ version: string; type: DotnetType; targetPath: string }>,
 ): Promise<VersionCacheResult[]> {
@@ -74,9 +63,6 @@ export async function restoreVersionCaches(
 	return Promise.all(restorePromises);
 }
 
-/**
- * Save a single .NET version to cache
- */
 export async function saveVersionCache(
 	version: string,
 	type: DotnetType,
@@ -105,9 +91,6 @@ export async function saveVersionCache(
 	}
 }
 
-/**
- * Check if a cache entry exists for a specific version without restoring it
- */
 export async function versionCacheExists(
 	version: string,
 	type: DotnetType,
@@ -136,9 +119,6 @@ export async function versionCacheExists(
 
 export type CacheHitStatus = 'true' | 'false' | 'partial';
 
-/**
- * Determine cache hit status from restore results
- */
 export function getCacheHitStatus(
 	results: VersionCacheResult[],
 ): CacheHitStatus {
