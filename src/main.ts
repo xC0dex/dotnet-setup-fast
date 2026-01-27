@@ -341,7 +341,7 @@ function setOutputsFromInstallations(
 		const versionsList = sorted
 			.map((i) => formatVersion(i.type, i.version))
 			.join(' | ');
-		core.info(`✅ Already installed: ${versionsList}`);
+		core.info(`Already installed: ${versionsList}`);
 	}
 
 	if (localCache.length > 0) {
@@ -349,7 +349,7 @@ function setOutputsFromInstallations(
 		const versionsList = sorted
 			.map((i) => formatVersion(i.type, i.version))
 			.join(' | ');
-		core.info(`📦 Restored from local cache: ${versionsList}`);
+		core.info(`Restored from local cache: ${versionsList}`);
 	}
 
 	if (githubCache.length > 0) {
@@ -357,7 +357,7 @@ function setOutputsFromInstallations(
 		const versionsList = sorted
 			.map((i) => formatVersion(i.type, i.version))
 			.join(' | ');
-		core.info(`📦 Restored from GitHub Actions cache: ${versionsList}`);
+		core.info(`Restored from GitHub Actions cache: ${versionsList}`);
 	}
 
 	if (downloaded.length > 0) {
@@ -365,7 +365,7 @@ function setOutputsFromInstallations(
 		const versionsList = sorted
 			.map((i) => formatVersion(i.type, i.version))
 			.join(' | ');
-		core.info(`⬇️ Downloaded: ${versionsList}`);
+		core.info(`Downloaded: ${versionsList}`);
 	}
 }
 
