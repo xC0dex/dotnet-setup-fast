@@ -31,9 +31,6 @@ export interface InstallResult {
 	source: InstallSource;
 }
 
-/**
- * Ensure the downloaded file exists and is non-empty
- */
 function validateDownloadedFile(downloadPath: string, prefix: string): void {
 	const stats = fs.statSync(downloadPath);
 	if (stats.size === 0) {
@@ -45,9 +42,6 @@ function validateDownloadedFile(downloadPath: string, prefix: string): void {
 	}
 }
 
-/**
- * Validate file hash (SHA512)
- */
 function validateFileHash(
 	filePath: string,
 	expectedHash: string,
@@ -144,9 +138,6 @@ export function configureEnvironment(installDir: string): void {
 	core.exportVariable('DOTNET_ROOT', installDir);
 }
 
-/**
- * Get the tool cache directory
- */
 function getToolCacheDirectory(): string {
 	const toolCacheDir =
 		process.env.AGENT_TOOLSDIRECTORY || process.env.RUNNER_TOOL_CACHE;
@@ -158,9 +149,6 @@ function getToolCacheDirectory(): string {
 	return toolCacheDir;
 }
 
-/**
- * Get or create the shared .NET installation directory
- */
 export function getDotNetInstallDirectory(): string {
 	if (!dotnetInstallDir) {
 		dotnetInstallDir = path.join(getToolCacheDirectory(), 'dotnet');
@@ -168,11 +156,8 @@ export function getDotNetInstallDirectory(): string {
 	return dotnetInstallDir;
 }
 
-/**
- * Get cache path for a specific version (used for per-version caching)
- * Uses RUNNER_TEMP instead of TOOL_CACHE because @actions/cache needs access to the path
- * Format: $RUNNER_TEMP/dotnet-cache/{type}/{version}
- */
+// Uses RUNNER_TEMP instead of TOOL_CACHE because @actions/cache needs access to the path
+// Format: $RUNNER_TEMP/dotnet-cache/{type}/{version}
 function getVersionCachePath(version: string, type: DotnetType): string {
 	const runnerTemp = process.env.RUNNER_TEMP;
 	if (!runnerTemp) {
@@ -181,9 +166,6 @@ function getVersionCachePath(version: string, type: DotnetType): string {
 	return path.join(runnerTemp, 'dotnet-cache', type, version);
 }
 
-/**
- * Check if a version is already cached locally
- */
 function isVersionCachedLocally(version: string, type: DotnetType): boolean {
 	const cachePath = getVersionCachePath(version, type);
 	const platform = getPlatform();
@@ -192,10 +174,6 @@ function isVersionCachedLocally(version: string, type: DotnetType): boolean {
 	return fs.existsSync(dotnetPath);
 }
 
-/**
- * Check if a version is already installed in the installation directory
- * Uses dotnet --list-sdks/runtimes to check if the version is installed
- */
 async function isVersionInstalledInDirectory(
 	installDir: string,
 	version: string,
@@ -223,9 +201,6 @@ async function isVersionInstalledInDirectory(
 	}
 }
 
-/**
- * Install .NET SDK or Runtime with caching support
- */
 export async function installDotNet(
 	options: InstallOptions,
 ): Promise<InstallResult> {
@@ -338,9 +313,6 @@ export async function installDotNet(
 	};
 }
 
-/**
- * Get download URL and hash from releases API
- */
 export async function getDotNetDownloadInfo(
 	version: string,
 	type: DotnetType,
@@ -404,9 +376,6 @@ export async function getDotNetDownloadInfo(
 	return { url: file.url, hash: file.hash };
 }
 
-/**
- * Get the appropriate section from a release entry based on type and version
- */
 function getSectionFromRelease(
 	release: Release,
 	version: string,
@@ -421,9 +390,6 @@ function getSectionFromRelease(
 	return release.runtime;
 }
 
-/**
- * Get the expected filename pattern for download
- */
 function getExpectedFileName(
 	type: DotnetType,
 	rid: string,
@@ -438,9 +404,6 @@ function getExpectedFileName(
 	return `dotnet-runtime-${rid}.${extension}`;
 }
 
-/**
- * Download with retry logic
- */
 async function downloadWithRetry(
 	url: string,
 	maxRetries: number,

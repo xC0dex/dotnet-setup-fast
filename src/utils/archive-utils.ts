@@ -1,8 +1,5 @@
 import * as toolCache from '@actions/tool-cache';
 
-/**
- * Extract downloaded archive
- */
 export async function extractArchive(
 	archivePath: string,
 	extension: string,
