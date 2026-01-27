@@ -1,7 +1,11 @@
 import * as core from '@actions/core';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { getDotNetInstallDirectory, installDotNet } from './installer';
+import {
+	configureEnvironment,
+	getDotNetInstallDirectory,
+	installDotNet,
+} from './installer';
 import { getPlatform } from './utils/platform-utils';
 import type {
 	DotnetType,
@@ -331,6 +335,9 @@ export async function run(): Promise<void> {
 			core.info(
 				'✅ All requested versions are already installed on the system',
 			);
+			// Still configure environment to ensure DOTNET_ROOT is set
+			const installDir = getDotNetInstallDirectory();
+			configureEnvironment(installDir);
 			return;
 		}
 
