@@ -5,7 +5,6 @@ import * as crypto from 'node:crypto';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import type { DotnetType, FileInfo, InstallSource, Release } from './types';
-import { extractArchive } from './utils/archive-utils';
 import { restoreVersionCache, saveVersionCache } from './utils/cache-utils';
 import {
 	getInstalledVersions,
@@ -87,12 +86,14 @@ async function extractDotnetArchive(
 	downloadPath: string,
 	platform: string,
 	prefix: string,
-	destination?: string,
+	destination: string,
 ): Promise<string> {
 	core.debug(`${prefix} Extracting...`);
-	const extensions = platform === 'win' ? 'zip' : 'tar.gz';
 	try {
-		return await extractArchive(downloadPath, extensions, destination);
+		if (platform === 'win') {
+			return await toolCache.extractZip(downloadPath, destination);
+		}
+		return await toolCache.extractTar(downloadPath, destination);
 	} catch (error) {
 		const errorMessage = error instanceof Error ? error.message : String(error);
 		throw new Error(`Failed to extract archive: ${errorMessage}`);
