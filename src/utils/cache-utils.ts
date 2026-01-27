@@ -1,5 +1,7 @@
 import * as cache from '@actions/cache';
 import * as core from '@actions/core';
+import * as io from '@actions/io';
+import * as path from 'node:path';
 import type { DotnetType } from '../types';
 import { getArchitecture, getPlatform } from './platform-utils';
 
@@ -34,15 +36,21 @@ export async function restoreVersionCache(
 	const cacheKey = generateVersionCacheKey(version, type);
 
 	try {
+		// Ensure parent directory exists before restore
+		// GitHub Actions cache requires the parent directory to exist
+		const parentDir = path.dirname(targetPath);
+		core.debug(`Ensuring cache directory exists: ${parentDir}`);
+		await io.mkdirP(parentDir);
+
 		core.debug(`Restoring cache: ${cacheKey} -> ${targetPath}`);
 		const restoredKey = await cache.restoreCache([targetPath], cacheKey);
 
 		if (restoredKey) {
-			core.debug(`Cache restored: ${cacheKey}`);
+			core.debug(`Cache restored successfully: ${cacheKey} -> ${targetPath}`);
 			return { version, type, restored: true };
 		}
 
-		core.debug(`Cache not found: ${cacheKey}`);
+		core.debug(`Cache not found for key: ${cacheKey}`);
 		return { version, type, restored: false };
 	} catch (error) {
 		const errorMessage = error instanceof Error ? error.message : String(error);
@@ -79,14 +87,16 @@ export async function saveVersionCache(
 	core.debug(`Saving cache: ${cacheKey} <- ${sourcePath}`);
 
 	try {
+		// Ensure source path exists before saving
+		core.debug(`Verifying source path exists: ${sourcePath}`);
 		await cache.saveCache([sourcePath], cacheKey);
-		core.debug(`Cache saved: ${cacheKey}`);
+		core.debug(`Cache saved successfully: ${cacheKey}`);
 	} catch (error) {
 		const errorMessage = error instanceof Error ? error.message : String(error);
 
 		// Cache save failures are not critical - log as warning
 		if (errorMessage.includes('ReserveCacheError')) {
-			core.debug(`Cache already exists: ${cacheKey}`);
+			core.debug(`Cache already exists (skipped): ${cacheKey}`);
 		} else {
 			core.warning(
 				`Failed to save cache for ${type} ${version}: ${errorMessage}`,
