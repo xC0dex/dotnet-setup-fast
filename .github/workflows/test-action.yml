@@ -131,13 +131,16 @@ jobs:
       - name: Checkout
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
 
+      - name: print environment variables
+        run: printenv | sort
+
       - name: Setup .NET with caching enabled
         uses: ./
         id: setup-dotnet
         with:
           sdk-version: '10.x'
-          runtime-version: '9.x'
-          aspnetcore-version: '9.x'
+          runtime-version: '9.x, 6.0.0'
+          aspnetcore-version: '9.0.0'
 
       - name: Verify installation
         run: |

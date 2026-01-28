@@ -220,10 +220,20 @@ Caching is enabled by default and dramatically speeds up subsequent workflow run
 
 ### How Caching Works
 
+The action uses a three-tier caching strategy:
+
+1. **Installation directory** (persistent across workflow runs) - checked first
+2. **Local cache** (temporary per-version cache) - used during installation
+3. **GitHub Actions cache** (remote) - restored if local caches miss
+
+**Installation flow:**
+
 1. **Version Resolution:** Wildcards and keywords are resolved to concrete versions (e.g., `9.x.x` → `9.0.105`)
 2. **Cache Key Generation:** Cache key is created from platform, architecture, and **resolved versions**
-3. **Cache Check:** If a matching cache exists, .NET is restored
-4. **Fresh Download:** If no cache or version changed, .NET is downloaded and cached
+3. **Check installation directory:** If version exists, use it immediately
+4. **Check local cache:** If found, copy to installation directory
+5. **Check GitHub Actions cache:** If enabled and found, restore and use
+6. **Fresh Download:** If all caches miss, download and cache at all levels
 
 **Important:** The cache key uses the **resolved version**, not the input pattern. If you specify `10.x.x` and a new patch `10.0.106` is released, the action will:
 
@@ -255,6 +265,12 @@ For scenarios where you always want fresh downloads:
 ```
 
 ### Check Cache Hit
+
+The `cache-hit` output can be:
+
+- `true` - all versions restored from cache
+- `false` - no versions found in cache (all downloaded)
+- `partial` - some versions cached, others downloaded
 
 ```yaml
 - uses: fast-actions/setup-dotnet@v1
