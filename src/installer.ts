@@ -5,7 +5,7 @@ import * as crypto from 'node:crypto';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import type { DotnetType, FileInfo, InstallSource, Release } from './types';
-import { restoreVersionCache, saveVersionCache } from './utils/cache-utils';
+import { getVersionCachePath } from './utils/cache-utils';
 import {
 	getInstalledVersions,
 	isVersionInstalled,
@@ -19,24 +19,13 @@ let dotnetInstallDir: string | null = null;
 export interface InstallOptions {
 	version: string;
 	type: DotnetType;
-	cacheEnabled: boolean;
 }
 
 export interface InstallResult {
 	version: string;
 	type: DotnetType;
 	path: string;
-	cacheHit: boolean;
 	source: InstallSource;
-}
-
-export interface PreparedInstallation {
-	version: string;
-	type: DotnetType;
-	extractedPath: string;
-	cacheHit: boolean;
-	source: InstallSource;
-	alreadyInstalled: boolean;
 }
 
 function validateDownloadedFile(downloadPath: string, prefix: string): void {
@@ -232,15 +221,7 @@ export function getDotNetInstallDirectory(): string {
 	return dotnetInstallDir;
 }
 
-function getVersionCachePath(version: string, type: DotnetType): string {
-	const runnerTemp = process.env.RUNNER_TEMP;
-	if (!runnerTemp) {
-		throw new Error('RUNNER_TEMP environment variable is not set.');
-	}
-	return path.join(runnerTemp, 'dotnet-cache', type, version);
-}
-
-function isVersionCachedLocally(version: string, type: DotnetType): boolean {
+export function isVersionInCache(version: string, type: DotnetType): boolean {
 	const cachePath = getVersionCachePath(version, type);
 	const platform = getPlatform();
 	const dotnetBinary = platform === 'win' ? 'dotnet.exe' : 'dotnet';
@@ -275,142 +256,62 @@ async function isVersionInstalledInDirectory(
 	}
 }
 
-export async function prepareInstallation(
+export async function installVersion(
 	options: InstallOptions,
-): Promise<PreparedInstallation> {
-	const { version, type, cacheEnabled } = options;
+): Promise<InstallResult> {
+	const { version, type } = options;
 	const prefix = `[${type.toUpperCase()}]`;
 	const platform = getPlatform();
 	const installDir = getDotNetInstallDirectory();
-	const versionCachePath = getVersionCachePath(version, type);
+	const cachePath = getVersionCachePath(version, type);
 
-	// Check if already installed in installation directory (from previous run)
-	core.debug(`${prefix} Checking if already installed in: ${installDir}`);
+	core.debug(`${prefix} Installing ${version}`);
+
 	if (await isVersionInstalledInDirectory(installDir, version, type)) {
-		core.debug(
-			`${prefix} Version ${version} already installed in installation directory: ${installDir}`,
-		);
-		return {
-			version,
-			type,
-			extractedPath: installDir,
-			cacheHit: true,
-			source: 'installation-directory',
-			alreadyInstalled: true,
-		};
-	}
-	core.debug(`${prefix} Not found in installation directory`);
-
-	// Check if already cached locally in per-version cache
-	core.debug(`${prefix} Checking local version cache: ${versionCachePath}`);
-	if (isVersionCachedLocally(version, type)) {
-		core.info(`${prefix} Found in local version cache: ${versionCachePath}`);
-		validateExtractedBinary(versionCachePath, platform);
-		return {
-			version,
-			type,
-			extractedPath: versionCachePath,
-			cacheHit: true,
-			source: 'local-cache',
-			alreadyInstalled: false,
-		};
-	}
-	core.debug(`${prefix} Not found in local version cache`);
-
-	// Try to restore from GitHub cache if enabled
-	if (cacheEnabled) {
-		core.debug(`${prefix} Attempting to restore from GitHub Actions cache`);
-		const cacheResult = await restoreVersionCache(
-			version,
-			type,
-			versionCachePath,
-		);
-		if (cacheResult.restored) {
-			core.debug(
-				`${prefix} Restored from GitHub Actions cache: ${versionCachePath}`,
-			);
-			validateExtractedBinary(versionCachePath, platform);
-			return {
-				version,
-				type,
-				extractedPath: versionCachePath,
-				cacheHit: true,
-				source: 'github-cache',
-				alreadyInstalled: false,
-			};
-		}
-		core.debug(`${prefix} Not found in GitHub Actions cache`);
-	} else {
-		core.debug(
-			`${prefix} Cache disabled, skipping GitHub Actions cache restore`,
-		);
-	}
-
-	// Download and extract
-	const { url, hash } = await getDotNetDownloadInfo(version, type);
-	const downloadPath = await downloadDotnetArchive(url, hash, prefix);
-
-	// Ensure parent directory exists before extraction
-	await io.mkdirP(path.dirname(versionCachePath));
-
-	// Extract directly to version cache directory
-	core.debug(
-		`${prefix} Extracting to local version cache: ${versionCachePath}`,
-	);
-
-	const extractedPath =
-		platform === 'win'
-			? await toolCache.extractZip(downloadPath, versionCachePath)
-			: await toolCache.extractTar(downloadPath, versionCachePath);
-	validateExtractedBinary(extractedPath, platform);
-	core.debug(`${prefix} Extracted to local version cache`);
-
-	// Save to GitHub cache if enabled
-	if (cacheEnabled) {
-		core.debug(`${prefix} Saving to GitHub Actions cache`);
-		if (platform === 'win') {
-			core.info('Caching is currently not supported on Windows');
-		} else {
-			await saveVersionCache(version, type, versionCachePath);
-		}
-	} else {
-		core.debug(`${prefix} Cache disabled, skipping GitHub Actions cache save`);
-	}
-
-	return {
-		version,
-		type,
-		extractedPath: versionCachePath,
-		cacheHit: false,
-		source: 'download',
-		alreadyInstalled: false,
-	};
-}
-
-export async function copyInstallation(
-	prepared: PreparedInstallation,
-	installDir: string,
-): Promise<InstallResult> {
-	const { version, type, extractedPath, cacheHit, source, alreadyInstalled } =
-		prepared;
-	const prefix = `[${type.toUpperCase()}]`;
-
-	// If already installed, nothing to copy.
-	if (alreadyInstalled) {
+		core.debug(`${prefix} Already installed in: ${installDir}`);
 		return {
 			version,
 			type,
 			path: installDir,
-			cacheHit,
-			source,
+			source: 'installation-directory',
 		};
 	}
 
-	// Copy based on type
+	if (isVersionInCache(version, type)) {
+		core.debug(`${prefix} Found in cache: ${cachePath}`);
+		validateExtractedBinary(cachePath, platform);
+
+		if (type === 'sdk') {
+			await copySdkToInstallDir(cachePath, installDir, prefix);
+		} else {
+			await copyRuntimeToInstallDir(cachePath, installDir, prefix);
+		}
+
+		return {
+			version,
+			type,
+			path: installDir,
+			source: 'github-cache',
+		};
+	}
+
+	core.debug(`${prefix} Downloading ${version}`);
+	const { url, hash } = await getDotNetDownloadInfo(version, type);
+	const downloadPath = await downloadDotnetArchive(url, hash, prefix);
+
+	await io.mkdirP(cachePath);
+	core.debug(`${prefix} Extracting to cache: ${cachePath}`);
+
+	const extractedPath =
+		platform === 'win'
+			? await toolCache.extractZip(downloadPath, cachePath)
+			: await toolCache.extractTar(downloadPath, cachePath);
+
+	validateExtractedBinary(extractedPath, platform);
+
 	if (type === 'sdk') {
 		await copySdkToInstallDir(extractedPath, installDir, prefix);
 	} else {
-		// For runtime and aspnetcore, only copy host and shared folders
 		await copyRuntimeToInstallDir(extractedPath, installDir, prefix);
 	}
 
@@ -418,8 +319,7 @@ export async function copyInstallation(
 		version,
 		type,
 		path: installDir,
-		cacheHit,
-		source,
+		source: 'download',
 	};
 }
 

@@ -1,22 +1,22 @@
 ---
 name: Unified Dotnet Cache
-overview: "Refactoring des Caching-Systems: Ein dotnet-cache Ordner als GitHub-Cache und lokaler Cache, Hash-basierter Key."
+overview: 'Refactoring des Caching-Systems: Ein dotnet-cache Ordner als GitHub-Cache und lokaler Cache, Hash-basierter Key.'
 todos:
   - id: unified-cache
     content: Hash-basierte Cache-Key Generierung und dotnet-cache Ordner Logik in cache-utils.ts
-    status: pending
+    status: completed
   - id: installer-refactor
-    content: "installer.ts: Entpacken in dotnet-cache Ordner, dann ins Tool-Cache kopieren"
-    status: pending
+    content: 'installer.ts: Entpacken in dotnet-cache Ordner, dann ins Tool-Cache kopieren'
+    status: completed
   - id: main-integration
-    content: "main.ts: Cache-Aufrufe auf neues System umstellen"
-    status: pending
+    content: 'main.ts: Cache-Aufrufe auf neues System umstellen'
+    status: completed
   - id: tests-update
     content: Tests in cache-utils.test.ts und installer.test.ts aktualisieren
-    status: pending
+    status: completed
   - id: validate
     content: pnpm validate ausführen
-    status: pending
+    status: completed
 isProject: false
 ---
 
@@ -30,8 +30,6 @@ flowchart TD
     ExtractTemp --> SaveGH[Speichern in GitHub Cache - pro Version]
     ExtractTemp --> CopyTC[Kopieren in Tool-Cache]
 ```
-
-
 
 **Probleme:**
 
@@ -52,8 +50,6 @@ flowchart TD
     ExtractToCache --> CopyToInstall
     CopyToInstall --> SaveCache[GitHub Cache speichern]
 ```
-
-
 
 **Vorteile:**
 
@@ -118,10 +114,11 @@ interface VersionEntry {
 
 function generateVersionsHash(versions: VersionEntry[]): string {
   // Sortiert fuer Determinismus: erst nach type, dann nach version
-  const sorted = [...versions].sort((a, b) => 
-    a.type.localeCompare(b.type) || a.version.localeCompare(b.version)
+  const sorted = [...versions].sort(
+    (a, b) =>
+      a.type.localeCompare(b.type) || a.version.localeCompare(b.version),
   );
-  const data = sorted.map(v => `${v.type}:${v.version}`).join('|');
+  const data = sorted.map((v) => `${v.type}:${v.version}`).join('|');
   return crypto.createHash('sha256').update(data).digest('hex').slice(0, 8);
 }
 
@@ -149,7 +146,7 @@ function getVersionCachePath(version: string, type: DotnetType): string {
 async function restoreUnifiedCache(versions: VersionEntry[]): Promise<boolean> {
   const cacheKey = generateUnifiedCacheKey(versions);
   const cachePath = getDotnetCacheDirectory();
-  
+
   await io.mkdirP(cachePath);
   const restoredKey = await cache.restoreCache([cachePath], cacheKey);
   return restoredKey !== undefined;
@@ -158,7 +155,7 @@ async function restoreUnifiedCache(versions: VersionEntry[]): Promise<boolean> {
 async function saveUnifiedCache(versions: VersionEntry[]): Promise<void> {
   const cacheKey = generateUnifiedCacheKey(versions);
   const cachePath = getDotnetCacheDirectory();
-  
+
   await cache.saveCache([cachePath], cacheKey);
 }
 ```
@@ -176,28 +173,37 @@ async function installVersion(options: InstallOptions): Promise<InstallResult> {
   const { version, type } = options;
   const installDir = getDotNetInstallDirectory();
   const cachePath = getVersionCachePath(version, type);
-  
+
   // 1. Pruefen ob bereits im Tool-Cache installiert
   if (await isVersionInstalledInDirectory(installDir, version, type)) {
-    return { version, type, path: installDir, source: 'installation-directory' };
+    return {
+      version,
+      type,
+      path: installDir,
+      source: 'installation-directory',
+    };
   }
-  
+
   // 2. Pruefen ob im dotnet-cache (von GitHub Cache restored)
   if (isVersionInCache(version, type)) {
     await copyToInstallDir(cachePath, installDir, type);
     return { version, type, path: installDir, source: 'github-cache' };
   }
-  
+
   // 3. Herunterladen und in dotnet-cache entpacken
   const { url, hash } = await getDotNetDownloadInfo(version, type);
-  const downloadPath = await downloadDotnetArchive(url, hash, `[${type.toUpperCase()}]`);
-  
+  const downloadPath = await downloadDotnetArchive(
+    url,
+    hash,
+    `[${type.toUpperCase()}]`,
+  );
+
   await io.mkdirP(cachePath);
   await extractArchive(downloadPath, cachePath);
-  
+
   // 4. In Tool-Cache kopieren
   await copyToInstallDir(cachePath, installDir, type);
-  
+
   return { version, type, path: installDir, source: 'download' };
 }
 ```
@@ -210,21 +216,21 @@ async function run(): Promise<void> {
   const requestedVersions = await resolveRequestedVersions(inputs);
   const deduplicated = await deduplicateVersions(requestedVersions);
   const versionEntries = buildVersionEntries(deduplicated);
-  
+
   // 1. GitHub Cache wiederherstellen (befuellt dotnet-cache Ordner)
   let cacheRestored = false;
   if (inputs.cacheEnabled) {
     cacheRestored = await restoreUnifiedCache(versionEntries);
   }
-  
+
   // 2. Alle Versionen installieren (aus Cache oder Download)
   const results = await installAllVersions(versionEntries);
-  
+
   // 3. GitHub Cache speichern (falls nicht restored und nicht Windows)
   if (inputs.cacheEnabled && !cacheRestored && platform !== 'win') {
     await saveUnifiedCache(versionEntries);
   }
-  
+
   configureEnvironment(getDotNetInstallDirectory());
   setOutputsFromInstallations(results);
 }
@@ -246,7 +252,6 @@ Behalten/Refaktoren:
 
 ## Dateien zu aendern
 
-
 | Datei                                                            | Aenderungen                                                                    |
 | ---------------------------------------------------------------- | ------------------------------------------------------------------------------ |
 | `[src/utils/cache-utils.ts](src/utils/cache-utils.ts)`           | Hash-Key, `restoreUnifiedCache`, `saveUnifiedCache`, alte Funktionen entfernen |
@@ -255,9 +260,7 @@ Behalten/Refaktoren:
 | `[src/utils/cache-utils.test.ts](src/utils/cache-utils.test.ts)` | Tests fuer neue Funktionen                                                     |
 | `[src/installer.test.ts](src/installer.test.ts)`                 | Tests anpassen                                                                 |
 
-
 ## Migration
 
 - Neues Cache-Key-Format macht alte Caches automatisch ungueltig
 - Keine Breaking Changes fuer Action-User (gleiches Interface)
-

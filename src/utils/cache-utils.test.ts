@@ -1,325 +1,250 @@
 import * as cache from '@actions/cache';
 import * as io from '@actions/io';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
-	generateVersionCacheKey,
-	getCacheHitStatus,
-	restoreVersionCache,
-	restoreVersionCaches,
-	saveVersionCache,
-	versionCacheExists,
+	generateUnifiedCacheKey,
+	generateVersionsHash,
+	getDotnetCacheDirectory,
+	getVersionCachePath,
+	restoreUnifiedCache,
+	saveUnifiedCache,
+	type VersionEntry,
 } from './cache-utils';
 import * as platformUtils from './platform-utils';
 
-// Mock dependencies
 vi.mock('@actions/cache');
 vi.mock('@actions/io');
 vi.mock('./platform-utils');
 
-describe('generateVersionCacheKey', () => {
+describe('getDotnetCacheDirectory', () => {
+	const originalRunnerTemp = process.env.RUNNER_TEMP;
+
 	afterEach(() => {
-		vi.resetAllMocks();
+		process.env.RUNNER_TEMP = originalRunnerTemp;
 	});
 
-	it('should generate cache key for SDK version', () => {
-		vi.mocked(platformUtils.getPlatform).mockReturnValue('linux');
-		vi.mocked(platformUtils.getArchitecture).mockReturnValue('x64');
+	it('should return dotnet-cache directory path', () => {
+		process.env.RUNNER_TEMP = '/tmp/runner';
 
-		const key = generateVersionCacheKey('10.0.102', 'sdk');
+		const result = getDotnetCacheDirectory();
 
-		expect(key).toBe('dotnet-linux-x64-sdk-10.0.102');
+		expect(result).toBe('/tmp/runner/dotnet-cache');
 	});
 
-	it('should generate cache key for runtime version', () => {
-		vi.mocked(platformUtils.getPlatform).mockReturnValue('win');
-		vi.mocked(platformUtils.getArchitecture).mockReturnValue('x64');
+	it('should throw error when RUNNER_TEMP is not set', () => {
+		delete process.env.RUNNER_TEMP;
 
-		const key = generateVersionCacheKey('8.0.29', 'runtime');
-
-		expect(key).toBe('dotnet-win-x64-runtime-8.0.29');
-	});
-
-	it('should generate cache key for aspnetcore version', () => {
-		vi.mocked(platformUtils.getPlatform).mockReturnValue('osx');
-		vi.mocked(platformUtils.getArchitecture).mockReturnValue('arm64');
-
-		const key = generateVersionCacheKey('9.0.0', 'aspnetcore');
-
-		expect(key).toBe('dotnet-osx-arm64-aspnetcore-9.0.0');
-	});
-
-	it('should generate different keys for different platforms', () => {
-		vi.mocked(platformUtils.getArchitecture).mockReturnValue('x64');
-
-		vi.mocked(platformUtils.getPlatform).mockReturnValue('linux');
-		const key1 = generateVersionCacheKey('10.0.102', 'sdk');
-
-		vi.mocked(platformUtils.getPlatform).mockReturnValue('win');
-		const key2 = generateVersionCacheKey('10.0.102', 'sdk');
-
-		expect(key1).not.toBe(key2);
-	});
-
-	it('should generate different keys for different types', () => {
-		vi.mocked(platformUtils.getPlatform).mockReturnValue('linux');
-		vi.mocked(platformUtils.getArchitecture).mockReturnValue('x64');
-
-		const sdkKey = generateVersionCacheKey('8.0.0', 'sdk');
-		const runtimeKey = generateVersionCacheKey('8.0.0', 'runtime');
-
-		expect(sdkKey).not.toBe(runtimeKey);
+		expect(() => getDotnetCacheDirectory()).toThrow(
+			'RUNNER_TEMP environment variable is not set.',
+		);
 	});
 });
 
-describe('restoreVersionCache', () => {
+describe('getVersionCachePath', () => {
+	const originalRunnerTemp = process.env.RUNNER_TEMP;
+
+	beforeEach(() => {
+		process.env.RUNNER_TEMP = '/tmp/runner';
+	});
+
+	afterEach(() => {
+		process.env.RUNNER_TEMP = originalRunnerTemp;
+	});
+
+	it('should return cache path for SDK version', () => {
+		const path = getVersionCachePath('8.0.100', 'sdk');
+
+		expect(path).toBe('/tmp/runner/dotnet-cache/sdk/8.0.100');
+	});
+
+	it('should return cache path for runtime version', () => {
+		const path = getVersionCachePath('8.0.0', 'runtime');
+
+		expect(path).toBe('/tmp/runner/dotnet-cache/runtime/8.0.0');
+	});
+
+	it('should return cache path for aspnetcore version', () => {
+		const path = getVersionCachePath('9.0.0', 'aspnetcore');
+
+		expect(path).toBe('/tmp/runner/dotnet-cache/aspnetcore/9.0.0');
+	});
+});
+
+describe('generateVersionsHash', () => {
+	it('should generate hash from versions', () => {
+		const versions: VersionEntry[] = [
+			{ version: '8.0.100', type: 'sdk' },
+			{ version: '8.0.0', type: 'runtime' },
+		];
+
+		const hash = generateVersionsHash(versions);
+
+		expect(hash).toHaveLength(8);
+		expect(typeof hash).toBe('string');
+	});
+
+	it('should generate same hash for same versions in different order', () => {
+		const versions1: VersionEntry[] = [
+			{ version: '8.0.100', type: 'sdk' },
+			{ version: '8.0.0', type: 'runtime' },
+		];
+
+		const versions2: VersionEntry[] = [
+			{ version: '8.0.0', type: 'runtime' },
+			{ version: '8.0.100', type: 'sdk' },
+		];
+
+		const hash1 = generateVersionsHash(versions1);
+		const hash2 = generateVersionsHash(versions2);
+
+		expect(hash1).toBe(hash2);
+	});
+
+	it('should generate different hashes for different versions', () => {
+		const versions1: VersionEntry[] = [{ version: '8.0.100', type: 'sdk' }];
+
+		const versions2: VersionEntry[] = [{ version: '9.0.100', type: 'sdk' }];
+
+		const hash1 = generateVersionsHash(versions1);
+		const hash2 = generateVersionsHash(versions2);
+
+		expect(hash1).not.toBe(hash2);
+	});
+});
+
+describe('generateUnifiedCacheKey', () => {
 	afterEach(() => {
 		vi.resetAllMocks();
 	});
 
-	it('should return restored:true when cache is restored', async () => {
+	it('should generate unified cache key with platform and arch', () => {
+		vi.mocked(platformUtils.getPlatform).mockReturnValue('linux');
+		vi.mocked(platformUtils.getArchitecture).mockReturnValue('x64');
+
+		const versions: VersionEntry[] = [{ version: '8.0.100', type: 'sdk' }];
+
+		const key = generateUnifiedCacheKey(versions);
+
+		expect(key).toMatch(/^dotnet-linux-x64-[a-f0-9]{8}$/);
+	});
+
+	it('should generate different keys for different platforms', () => {
+		const versions: VersionEntry[] = [{ version: '8.0.100', type: 'sdk' }];
+
+		vi.mocked(platformUtils.getPlatform).mockReturnValue('linux');
+		vi.mocked(platformUtils.getArchitecture).mockReturnValue('x64');
+		const key1 = generateUnifiedCacheKey(versions);
+
+		vi.mocked(platformUtils.getPlatform).mockReturnValue('win');
+		vi.mocked(platformUtils.getArchitecture).mockReturnValue('x64');
+		const key2 = generateUnifiedCacheKey(versions);
+
+		expect(key1).not.toBe(key2);
+	});
+});
+
+describe('restoreUnifiedCache', () => {
+	const originalRunnerTemp = process.env.RUNNER_TEMP;
+
+	beforeEach(() => {
+		process.env.RUNNER_TEMP = '/tmp/runner';
+	});
+
+	afterEach(() => {
+		vi.resetAllMocks();
+		process.env.RUNNER_TEMP = originalRunnerTemp;
+	});
+
+	it('should return true when cache is restored', async () => {
 		vi.mocked(platformUtils.getPlatform).mockReturnValue('linux');
 		vi.mocked(platformUtils.getArchitecture).mockReturnValue('x64');
 		vi.mocked(io.mkdirP).mockResolvedValue();
 		vi.mocked(cache.restoreCache).mockResolvedValue(
-			'dotnet-linux-x64-sdk-10.0.102',
+			'dotnet-linux-x64-abc12345',
 		);
 
-		const result = await restoreVersionCache(
-			'10.0.102',
-			'sdk',
-			'/path/to/cache',
-		);
+		const versions: VersionEntry[] = [{ version: '8.0.100', type: 'sdk' }];
+		const result = await restoreUnifiedCache(versions);
 
-		expect(result).toEqual({
-			version: '10.0.102',
-			type: 'sdk',
-			restored: true,
-		});
-		expect(io.mkdirP).toHaveBeenCalledWith('/path/to');
+		expect(result).toBe(true);
+		expect(io.mkdirP).toHaveBeenCalledWith('/tmp/runner/dotnet-cache');
 		expect(cache.restoreCache).toHaveBeenCalledWith(
-			['/path/to/cache'],
-			'dotnet-linux-x64-sdk-10.0.102',
+			['/tmp/runner/dotnet-cache'],
+			expect.stringMatching(/^dotnet-linux-x64-[a-f0-9]{8}$/),
 		);
 	});
 
-	it('should return restored:false when cache is not found', async () => {
+	it('should return false when cache is not found', async () => {
 		vi.mocked(platformUtils.getPlatform).mockReturnValue('linux');
 		vi.mocked(platformUtils.getArchitecture).mockReturnValue('x64');
 		vi.mocked(io.mkdirP).mockResolvedValue();
 		vi.mocked(cache.restoreCache).mockResolvedValue(undefined);
 
-		const result = await restoreVersionCache(
-			'10.0.102',
-			'sdk',
-			'/path/to/cache',
-		);
+		const versions: VersionEntry[] = [{ version: '8.0.100', type: 'sdk' }];
+		const result = await restoreUnifiedCache(versions);
 
-		expect(result).toEqual({
-			version: '10.0.102',
-			type: 'sdk',
-			restored: false,
-		});
-		expect(io.mkdirP).toHaveBeenCalledWith('/path/to');
+		expect(result).toBe(false);
 	});
 
-	it('should return restored:false on cache restore error', async () => {
+	it('should return false on cache restore error', async () => {
 		vi.mocked(platformUtils.getPlatform).mockReturnValue('linux');
 		vi.mocked(platformUtils.getArchitecture).mockReturnValue('x64');
 		vi.mocked(io.mkdirP).mockResolvedValue();
 		vi.mocked(cache.restoreCache).mockRejectedValue(new Error('Network error'));
 
-		const result = await restoreVersionCache(
-			'10.0.102',
-			'sdk',
-			'/path/to/cache',
-		);
+		const versions: VersionEntry[] = [{ version: '8.0.100', type: 'sdk' }];
+		const result = await restoreUnifiedCache(versions);
 
-		expect(result).toEqual({
-			version: '10.0.102',
-			type: 'sdk',
-			restored: false,
-		});
-		expect(io.mkdirP).toHaveBeenCalledWith('/path/to');
+		expect(result).toBe(false);
 	});
 });
 
-describe('restoreVersionCaches', () => {
+describe('saveUnifiedCache', () => {
+	const originalRunnerTemp = process.env.RUNNER_TEMP;
+
+	beforeEach(() => {
+		process.env.RUNNER_TEMP = '/tmp/runner';
+	});
+
 	afterEach(() => {
 		vi.resetAllMocks();
+		process.env.RUNNER_TEMP = originalRunnerTemp;
 	});
 
-	it('should restore multiple versions in parallel', async () => {
+	it('should save cache successfully', async () => {
 		vi.mocked(platformUtils.getPlatform).mockReturnValue('linux');
 		vi.mocked(platformUtils.getArchitecture).mockReturnValue('x64');
-		vi.mocked(io.mkdirP).mockResolvedValue();
-		vi.mocked(cache.restoreCache)
-			.mockResolvedValueOnce('dotnet-linux-x64-sdk-10.0.102')
-			.mockResolvedValueOnce(undefined);
-
-		const results = await restoreVersionCaches([
-			{ version: '10.0.102', type: 'sdk', targetPath: '/path/to/sdk' },
-			{ version: '8.0.0', type: 'runtime', targetPath: '/path/to/runtime' },
-		]);
-
-		expect(results).toHaveLength(2);
-		expect(results[0]).toEqual({
-			version: '10.0.102',
-			type: 'sdk',
-			restored: true,
-		});
-		expect(results[1]).toEqual({
-			version: '8.0.0',
-			type: 'runtime',
-			restored: false,
-		});
-	});
-});
-
-describe('saveVersionCache', () => {
-	afterEach(() => {
-		vi.resetAllMocks();
-	});
-
-	it('should save cache successfully when cache does not exist', async () => {
-		vi.mocked(platformUtils.getPlatform).mockReturnValue('linux');
-		vi.mocked(platformUtils.getArchitecture).mockReturnValue('x64');
-		// Mock versionCacheExists to return false (cache doesn't exist)
-		vi.mocked(cache.restoreCache).mockResolvedValueOnce(undefined);
 		vi.mocked(cache.saveCache).mockResolvedValue(123);
 
-		await saveVersionCache('10.0.102', 'sdk', '/path/to/cache');
+		const versions: VersionEntry[] = [{ version: '8.0.100', type: 'sdk' }];
 
-		expect(cache.restoreCache).toHaveBeenCalledWith(
-			expect.any(Array),
-			'dotnet-linux-x64-sdk-10.0.102',
-			undefined,
-			{ lookupOnly: true },
-		);
+		await saveUnifiedCache(versions);
+
 		expect(cache.saveCache).toHaveBeenCalledWith(
-			['/path/to/cache'],
-			'dotnet-linux-x64-sdk-10.0.102',
+			['/tmp/runner/dotnet-cache'],
+			expect.stringMatching(/^dotnet-linux-x64-[a-f0-9]{8}$/),
 		);
-	});
-
-	it('should skip saving when cache already exists', async () => {
-		vi.mocked(platformUtils.getPlatform).mockReturnValue('linux');
-		vi.mocked(platformUtils.getArchitecture).mockReturnValue('x64');
-		// Mock versionCacheExists to return true (cache exists)
-		vi.mocked(cache.restoreCache).mockResolvedValueOnce(
-			'dotnet-linux-x64-sdk-10.0.102',
-		);
-
-		await saveVersionCache('10.0.102', 'sdk', '/path/to/cache');
-
-		expect(cache.restoreCache).toHaveBeenCalledWith(
-			expect.any(Array),
-			'dotnet-linux-x64-sdk-10.0.102',
-			undefined,
-			{ lookupOnly: true },
-		);
-		expect(cache.saveCache).not.toHaveBeenCalled();
 	});
 
 	it('should not throw on cache save error', async () => {
 		vi.mocked(platformUtils.getPlatform).mockReturnValue('linux');
 		vi.mocked(platformUtils.getArchitecture).mockReturnValue('x64');
-		// Mock versionCacheExists to return false (cache doesn't exist)
-		vi.mocked(cache.restoreCache).mockResolvedValueOnce(undefined);
 		vi.mocked(cache.saveCache).mockRejectedValue(new Error('Save failed'));
 
-		await expect(
-			saveVersionCache('10.0.102', 'sdk', '/path/to/cache'),
-		).resolves.not.toThrow();
+		const versions: VersionEntry[] = [{ version: '8.0.100', type: 'sdk' }];
+
+		await expect(saveUnifiedCache(versions)).resolves.not.toThrow();
 	});
 
-	it('should handle ReserveCacheError gracefully as fallback', async () => {
+	it('should handle ReserveCacheError gracefully', async () => {
 		vi.mocked(platformUtils.getPlatform).mockReturnValue('linux');
 		vi.mocked(platformUtils.getArchitecture).mockReturnValue('x64');
-		// Mock versionCacheExists to return false (lookup might fail or miss)
-		vi.mocked(cache.restoreCache).mockResolvedValueOnce(undefined);
 		vi.mocked(cache.saveCache).mockRejectedValue(
 			new Error('ReserveCacheError: Cache already exists'),
 		);
 
-		await expect(
-			saveVersionCache('10.0.102', 'sdk', '/path/to/cache'),
-		).resolves.not.toThrow();
-	});
-});
+		const versions: VersionEntry[] = [{ version: '8.0.100', type: 'sdk' }];
 
-describe('versionCacheExists', () => {
-	afterEach(() => {
-		vi.resetAllMocks();
-	});
-
-	it('should return true when cache entry exists', async () => {
-		vi.mocked(platformUtils.getPlatform).mockReturnValue('linux');
-		vi.mocked(platformUtils.getArchitecture).mockReturnValue('x64');
-		vi.mocked(cache.restoreCache).mockResolvedValue(
-			'dotnet-linux-x64-sdk-10.0.102',
-		);
-
-		const result = await versionCacheExists('10.0.102', 'sdk');
-
-		expect(result).toBe(true);
-		expect(cache.restoreCache).toHaveBeenCalledWith(
-			expect.any(Array),
-			'dotnet-linux-x64-sdk-10.0.102',
-			undefined,
-			{ lookupOnly: true },
-		);
-	});
-
-	it('should return false when cache entry does not exist', async () => {
-		vi.mocked(platformUtils.getPlatform).mockReturnValue('linux');
-		vi.mocked(platformUtils.getArchitecture).mockReturnValue('x64');
-		vi.mocked(cache.restoreCache).mockResolvedValue(undefined);
-
-		const result = await versionCacheExists('10.0.102', 'sdk');
-
-		expect(result).toBe(false);
-	});
-
-	it('should return false on cache lookup error', async () => {
-		vi.mocked(platformUtils.getPlatform).mockReturnValue('linux');
-		vi.mocked(platformUtils.getArchitecture).mockReturnValue('x64');
-		vi.mocked(cache.restoreCache).mockRejectedValue(new Error('Lookup failed'));
-
-		const result = await versionCacheExists('10.0.102', 'sdk');
-
-		expect(result).toBe(false);
-	});
-});
-
-describe('getCacheHitStatus', () => {
-	it('should return "true" when all versions restored', () => {
-		const results = [
-			{ version: '10.0.102', type: 'sdk' as const, restored: true },
-			{ version: '8.0.0', type: 'runtime' as const, restored: true },
-		];
-
-		expect(getCacheHitStatus(results)).toBe('true');
-	});
-
-	it('should return "false" when no versions restored', () => {
-		const results = [
-			{ version: '10.0.102', type: 'sdk' as const, restored: false },
-			{ version: '8.0.0', type: 'runtime' as const, restored: false },
-		];
-
-		expect(getCacheHitStatus(results)).toBe('false');
-	});
-
-	it('should return "partial" when some versions restored', () => {
-		const results = [
-			{ version: '10.0.102', type: 'sdk' as const, restored: true },
-			{ version: '8.0.0', type: 'runtime' as const, restored: false },
-		];
-
-		expect(getCacheHitStatus(results)).toBe('partial');
-	});
-
-	it('should return "false" for empty results', () => {
-		expect(getCacheHitStatus([])).toBe('false');
+		await expect(saveUnifiedCache(versions)).resolves.not.toThrow();
 	});
 });

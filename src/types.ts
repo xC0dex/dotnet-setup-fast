@@ -36,6 +36,5 @@ export interface ReleaseManifest {
 
 export type InstallSource =
 	| 'installation-directory'
-	| 'local-cache'
 	| 'github-cache'
 	| 'download';
