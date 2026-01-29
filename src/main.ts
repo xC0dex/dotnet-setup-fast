@@ -393,8 +393,4 @@ export async function run(): Promise<void> {
 	}
 }
 
-process.on('SIGTERM', () => {
-	core.setFailed('Installation aborted by SIGTERM');
-});
-
 await run();
