@@ -376,8 +376,6 @@ export async function run(): Promise<void> {
 			return;
 		}
 
-		core.info('At least one requested version is not installed on the system');
-
 		const versionEntries = buildVersionEntries(deduplicated);
 		core.info(`Installing: ${formatVersionPlan(deduplicated)}`);
 

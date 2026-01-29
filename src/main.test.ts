@@ -410,9 +410,6 @@ describe('main', () => {
 			version: '9.0.500',
 			type: 'sdk',
 		});
-		expect(core.info).toHaveBeenCalledWith(
-			'At least one requested version is not installed on the system',
-		);
 	});
 
 	it('should skip installation when all aspnetcore versions already installed', async () => {
