@@ -220,29 +220,17 @@ Caching is enabled by default and dramatically speeds up subsequent workflow run
 
 ### How Caching Works
 
-The action uses a three-tier caching strategy:
-
-1. **Installation directory** (persistent across workflow runs) - checked first
-2. **Local cache** (temporary per-version cache) - used during installation
-3. **GitHub Actions cache** (remote) - restored if local caches miss
+The action uses a **unified cache**: one GitHub Actions cache entry per run, keyed by platform, architecture, and a hash of all resolved versions.
 
 **Installation flow:**
 
-1. **Version Resolution:** Wildcards and keywords are resolved to concrete versions (e.g., `9.x.x` → `9.0.105`)
-2. **Cache Key Generation:** Cache key is created from platform, architecture, and **resolved versions**
-3. **Check installation directory:** If version exists, use it immediately
-4. **Check local cache:** If found, copy to installation directory
-5. **Check GitHub Actions cache:** If enabled and found, restore and use
-6. **Fresh Download:** If all caches miss, download and cache at all levels
+1. **Version resolution:** Wildcards and keywords are resolved to concrete versions (e.g., `9.x.x` → `9.0.105`).
+2. **Cache key:** A single key is generated from platform, architecture, and a hash of all resolved versions (e.g., `dotnet-linux-x64-a1b2c3d4`).
+3. **Restore unified cache (if enabled):** The `dotnet-cache` directory is restored from GitHub Actions cache. It contains extracted archives per version (`sdk/8.0.100/`, `runtime/8.0.0/`, etc.).
+4. **Per-version install:** For each requested version, the action checks the installation directory, then the restored cache; if missing, it downloads and extracts into the cache, then copies into the installation directory.
+5. **Save unified cache (if enabled):** The `dotnet-cache` directory is saved to GitHub Actions cache for future runs.
 
-**Important:** The cache key uses the **resolved version**, not the input pattern. If you specify `10.x.x` and a new patch `10.0.106` is released, the action will:
-
-- Resolve `10.x.x` → `10.0.106` (new version)
-- Generate new cache key for `10.0.106`
-- Miss the old cache (was for `10.0.105`)
-- Download and cache `10.0.106`
-
-This ensures you always get the latest matching version without stale caches.
+**Important:** The cache key uses **all resolved versions** in one hash. Same set of versions → same key → cache hit. If you add a version or one resolves differently (e.g. `10.x` → `10.0.106` instead of `10.0.105`), the key changes and the action will download and cache the new set. There is no partial cache hit: either all requested versions are served from cache (`cache-hit: true`) or not (`cache-hit: false`).
 
 ### Cache Example
 
@@ -266,11 +254,10 @@ For scenarios where you always want fresh downloads:
 
 ### Check Cache Hit
 
-The `cache-hit` output can be:
+The `cache-hit` output is:
 
-- `true` - all versions restored from cache
-- `false` - no versions found in cache (all downloaded)
-- `partial` - some versions cached, others downloaded
+- `true` – all requested versions were restored from the unified cache
+- `false` – at least one version was downloaded (cache miss or cache disabled)
 
 ```yaml
 - uses: fast-actions/setup-dotnet@v1
