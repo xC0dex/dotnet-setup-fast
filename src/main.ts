@@ -7,8 +7,8 @@ import {
 	getDotNetInstallDirectory,
 	installVersion,
 	isVersionInCache,
-	type InstallResult,
 } from './installer';
+import type { InstallResult } from './installer.types';
 import { getPlatform } from './utils/platform-utils';
 import type {
 	DotnetType,
@@ -16,11 +16,8 @@ import type {
 	VersionSet,
 	VersionSetWithPrerelease,
 } from './types';
-import {
-	restoreUnifiedCache,
-	saveUnifiedCache,
-	type VersionEntry,
-} from './utils/cache-utils';
+import { restoreUnifiedCache, saveUnifiedCache } from './utils/cache-utils';
+import type { VersionEntry } from './utils/cache.types';
 import {
 	getInstalledVersions,
 	isVersionInstalled,
@@ -30,11 +27,14 @@ import {
 	readGlobalJson,
 } from './utils/global-json-reader';
 import { parseVersions } from './utils/input-parser';
-import { deduplicateVersions } from './utils/versioning/version-deduplicator';
 import {
-	fetchAndCacheReleaseInfo,
-	formatTypeLabel,
-} from './utils/versioning/version-resolver';
+	formatVersionPlan,
+	groupInstallationsBySource,
+	logInstallationsBySource,
+	setActionOutputs,
+} from './utils/output-formatter';
+import { deduplicateVersions } from './utils/versioning/version-deduplicator';
+import { fetchAndCacheReleaseInfo } from './utils/versioning/version-resolver';
 
 interface ActionInputs {
 	sdkInput: string;
@@ -43,30 +43,6 @@ interface ActionInputs {
 	globalJsonInput: string;
 	cacheEnabled: boolean;
 	allowPreview: boolean;
-}
-
-function formatVersionPlan(deduplicated: VersionSet): string {
-	const parts: string[] = [];
-	if (deduplicated.sdk.length > 0) {
-		parts.push(`SDK ${deduplicated.sdk.join(', ')}`);
-	}
-	if (deduplicated.runtime.length > 0) {
-		parts.push(`Runtime ${deduplicated.runtime.join(', ')}`);
-	}
-	if (deduplicated.aspnetcore.length > 0) {
-		parts.push(`ASP.NET Core ${deduplicated.aspnetcore.join(', ')}`);
-	}
-	return parts.join(' | ');
-}
-
-function setActionOutputs(
-	versions: string,
-	installDir: string,
-	cacheHit: boolean,
-): void {
-	core.setOutput('dotnet-version', versions);
-	core.setOutput('dotnet-path', installDir);
-	core.setOutput('cache-hit', cacheHit);
 }
 
 interface AllVersionsInstalledResult {
@@ -290,58 +266,6 @@ function getCacheHitStatusFromResults(results: InstallResult[]): boolean {
 	).length;
 
 	return githubCacheCount === results.length;
-}
-
-function sortByType(results: InstallResult[]): InstallResult[] {
-	const typeOrder: Record<DotnetType, number> = {
-		sdk: 0,
-		runtime: 1,
-		aspnetcore: 2,
-	};
-	return [...results].sort((a, b) => typeOrder[a.type] - typeOrder[b.type]);
-}
-
-function formatVersion(type: DotnetType, version: string): string {
-	const typeLabel = formatTypeLabel(type);
-	return `${typeLabel} ${version}`;
-}
-
-interface InstallationsBySource {
-	alreadyInstalled: InstallResult[];
-	githubCache: InstallResult[];
-	downloaded: InstallResult[];
-}
-
-function groupInstallationsBySource(
-	results: InstallResult[],
-): InstallationsBySource {
-	return {
-		alreadyInstalled: results.filter(
-			(r) => r.source === 'installation-directory',
-		),
-		githubCache: results.filter((r) => r.source === 'github-cache'),
-		downloaded: results.filter((r) => r.source === 'download'),
-	};
-}
-
-function formatVersionsList(results: InstallResult[]): string {
-	return sortByType(results)
-		.map((r) => formatVersion(r.type, r.version))
-		.join(' | ');
-}
-
-function logInstallationsBySource(grouped: InstallationsBySource): void {
-	const sources: Array<[string, InstallResult[]]> = [
-		['Already installed', grouped.alreadyInstalled],
-		['Restored from cache', grouped.githubCache],
-		['Downloaded', grouped.downloaded],
-	];
-
-	for (const [label, results] of sources) {
-		if (results.length > 0) {
-			core.info(`${label}: ${formatVersionsList(results)}`);
-		}
-	}
 }
 
 function setOutputsFromInstallations(results: InstallResult[]): void {

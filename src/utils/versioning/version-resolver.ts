@@ -1,15 +1,6 @@
 import * as core from '@actions/core';
 import type { DotnetType } from '../../types';
-
-interface ReleaseInfo {
-	'channel-version': string;
-	'latest-sdk': string;
-	'latest-release': string;
-	// For some reason, 'latest-runtime' was not the same as 'latest-release'. For now, we will use 'latest-release' only.
-	'latest-runtime'?: string;
-	'release-type': 'sts' | 'lts';
-	'support-phase': string;
-}
+import type { ReleaseInfo, ResolvedVersion } from './versioning.types';
 
 let cachedReleases: ReleaseInfo[] | null = null;
 
@@ -62,17 +53,6 @@ export async function fetchAndCacheReleaseInfo(): Promise<void> {
 	cachedReleases = releases;
 }
 
-export function formatTypeLabel(type: DotnetType): string {
-	switch (type) {
-		case 'sdk':
-			return 'SDK';
-		case 'runtime':
-			return 'Runtime';
-		case 'aspnetcore':
-			return 'ASP.NET Core';
-	}
-}
-
 // Examples: 10.x -> 10.x.x, 10.0 -> 10.0.x
 function normalizeVersionPattern(version: string): string {
 	const parts = version.split('.');
@@ -108,17 +88,15 @@ export function resolveVersion(
 			type,
 			allowPreview,
 		);
-		const typeLabel = formatTypeLabel(type);
 		core.info(
-			`Resolved ${versionLower.toUpperCase()} (${typeLabel}) -> ${resolved.value}`,
+			`Resolved ${versionLower.toUpperCase()} (${type.toUpperCase()}) -> ${resolved.value}`,
 		);
 		return resolved.value;
 	}
 
 	if (versionLower === 'latest') {
 		const resolved = resolveLatestFromReleases(releases, type, allowPreview);
-		const typeLabel = formatTypeLabel(type);
-		core.info(`Resolved LATEST (${typeLabel}) -> ${resolved.value}`);
+		core.info(`Resolved LATEST (${type.toUpperCase()}) -> ${resolved.value}`);
 		return resolved.value;
 	}
 
@@ -135,7 +113,7 @@ function resolveLatestFromReleases(
 	releases: ReleaseInfo[],
 	type: DotnetType,
 	allowPreview: boolean,
-): { value: string; channel: string } {
+): ResolvedVersion {
 	core.debug(`Resolving LATEST version for ${type}`);
 	const versionType = type === 'sdk' ? 'sdk' : 'runtime';
 
@@ -163,7 +141,7 @@ function resolveSupportTierFromReleases(
 	tier: 'lts' | 'sts',
 	type: DotnetType,
 	allowPreview: boolean,
-): { value: string; channel: string } {
+): ResolvedVersion {
 	core.debug(`Resolving ${tier.toUpperCase()} version for ${type}`);
 
 	const supportedReleases = releases.filter((r) => {

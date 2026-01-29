@@ -4,7 +4,14 @@ import * as toolCache from '@actions/tool-cache';
 import * as crypto from 'node:crypto';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import type { DotnetType, FileInfo, InstallSource, Release } from './types';
+import type { DotnetType, FileInfo, Release } from './types';
+import type {
+	DownloadInfo,
+	InstallOptions,
+	InstallResult,
+} from './installer.types';
+
+export type { DownloadInfo, InstallOptions, InstallResult };
 import { getVersionCachePath } from './utils/cache-utils';
 import {
 	getInstalledVersions,
@@ -15,18 +22,6 @@ import { fetchReleaseManifest } from './utils/versioning/release-cache';
 
 // Shared installation directory for all .NET installations
 let dotnetInstallDir: string | null = null;
-
-export interface InstallOptions {
-	version: string;
-	type: DotnetType;
-}
-
-export interface InstallResult {
-	version: string;
-	type: DotnetType;
-	path: string;
-	source: InstallSource;
-}
 
 function validateDownloadedFile(downloadPath: string, prefix: string): void {
 	const stats = fs.statSync(downloadPath);
@@ -328,7 +323,7 @@ export async function installVersion(
 export async function getDotNetDownloadInfo(
 	version: string,
 	type: DotnetType,
-): Promise<{ url: string; hash: string }> {
+): Promise<DownloadInfo> {
 	const platform = getPlatform();
 	const architecture = getArchitecture();
 	const extension = platform === 'win' ? 'zip' : 'tar.gz';

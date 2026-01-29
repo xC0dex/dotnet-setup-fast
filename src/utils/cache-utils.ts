@@ -4,12 +4,10 @@ import * as io from '@actions/io';
 import * as crypto from 'node:crypto';
 import * as path from 'node:path';
 import type { DotnetType } from '../types';
+import type { VersionEntry } from './cache.types';
 import { getArchitecture, getPlatform } from './platform-utils';
 
-export interface VersionEntry {
-	version: string;
-	type: DotnetType;
-}
+export type { VersionEntry };
 
 export function getDotnetCacheDirectory(): string {
 	const runnerTemp = process.env.RUNNER_TEMP;
