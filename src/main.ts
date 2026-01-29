@@ -69,27 +69,35 @@ function setActionOutputs(
 	core.setOutput('cache-hit', cacheHit);
 }
 
+interface AllVersionsInstalledResult {
+	allInstalled: boolean;
+	inToolCacheTarget?: boolean;
+}
+
 async function areAllVersionsInstalled(
 	deduplicated: VersionSet,
-): Promise<boolean> {
+): Promise<AllVersionsInstalledResult> {
 	const installDir = getDotNetInstallDirectory();
 	const platform = getPlatform();
 	const dotnetBinary = platform === 'win' ? 'dotnet.exe' : 'dotnet';
 	const dotnetPath = path.join(installDir, dotnetBinary);
 
-	const installed = fs.existsSync(dotnetPath)
+	const inToolCacheTarget = fs.existsSync(dotnetPath);
+	const installed = inToolCacheTarget
 		? await getInstalledVersions(dotnetPath)
 		: await getInstalledVersions();
 
-	return (
+	const allInstalled =
 		deduplicated.sdk.every((v) => isVersionInstalled(v, 'sdk', installed)) &&
 		deduplicated.runtime.every((v) =>
 			isVersionInstalled(v, 'runtime', installed),
 		) &&
 		deduplicated.aspnetcore.every((v) =>
 			isVersionInstalled(v, 'aspnetcore', installed),
-		)
-	);
+		);
+
+	if (!allInstalled) return { allInstalled: false };
+	return { allInstalled: true, inToolCacheTarget };
 }
 
 function readInputs(): ActionInputs {
@@ -357,12 +365,14 @@ export async function run(): Promise<void> {
 
 		const deduplicated = await deduplicateVersions(requestedVersions);
 
-		if (await areAllVersionsInstalled(deduplicated)) {
+		const allInstalledCheck = await areAllVersionsInstalled(deduplicated);
+		if (allInstalledCheck.allInstalled) {
 			core.info(
 				'✅ All requested versions are already installed on the system',
 			);
-			const installDir = getDotNetInstallDirectory();
-			configureEnvironment(installDir);
+			if (allInstalledCheck.inToolCacheTarget) {
+				configureEnvironment(getDotNetInstallDirectory());
+			}
 			return;
 		}
 
