@@ -15,8 +15,8 @@ importers:
         specifier: 2.0.3
         version: 2.0.3
       '@actions/exec':
-        specifier: 2.0.0
-        version: 2.0.0
+        specifier: 3.0.0
+        version: 3.0.0
       '@actions/io':
         specifier: 2.0.0
         version: 2.0.0
@@ -60,6 +60,9 @@ packages:
   '@actions/exec@2.0.0':
     resolution: {integrity: sha512-k8ngrX2voJ/RIN6r9xB82NVqKpnMRtxDoiO+g3olkIUpQNqjArXrCQceduQZCQj3P3xm32pChRLqRrtXTlqhIw==}
 
+  '@actions/exec@3.0.0':
+    resolution: {integrity: sha512-6xH/puSoNBXb72VPlZVm7vQ+svQpFyA96qdDBvhB8eNZOE8LtPf9L4oAsfzK/crCL8YZ+19fKYVnM63Sl+Xzlw==}
+
   '@actions/glob@0.5.1':
     resolution: {integrity: sha512-+dv/t2aKQdKp9WWSp+1yIXVJzH5Q38M0Mta26pzIbeec14EcIleMB7UU6N7sNgbEuYfyuVGpE5pOKjl6j1WXkA==}
 
@@ -68,6 +71,9 @@ packages:
 
   '@actions/io@2.0.0':
     resolution: {integrity: sha512-Jv33IN09XLO+0HS79aaODsvIRyduiF7NY/F6LYeK5oeUmrsz7aFdRphQjFoESF4jS7lMauDOttKALcpapVDIAg==}
+
+  '@actions/io@3.0.2':
+    resolution: {integrity: sha512-nRBchcMM+QK1pdjO7/idu86rbJI5YHUKCvKs0KxnSYbVe3F51UfGxuZX4Qy/fWlp6l7gWFwIkrOzN+oUK03kfw==}
 
   '@actions/tool-cache@3.0.1':
     resolution: {integrity: sha512-euK7sID37jMg1yWGkdXkLPI5Te7x/+2QMUPeHXogcpzUZ81mqlDZ+CgYhQo3LtB8LpVnnQyjs+hTTU0Ir4Y0RQ==}
@@ -1054,6 +1060,10 @@ snapshots:
     dependencies:
       '@actions/io': 2.0.0
 
+  '@actions/exec@3.0.0':
+    dependencies:
+      '@actions/io': 3.0.2
+
   '@actions/glob@0.5.1':
     dependencies:
       '@actions/core': 2.0.3
@@ -1065,6 +1075,8 @@ snapshots:
       undici: 6.23.0
 
   '@actions/io@2.0.0': {}
+
+  '@actions/io@3.0.2': {}
 
   '@actions/tool-cache@3.0.1':
     dependencies:
