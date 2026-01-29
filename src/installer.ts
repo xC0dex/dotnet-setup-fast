@@ -200,7 +200,9 @@ export function configureEnvironment(installDir: string): void {
 		core.addPath(installDir);
 	}
 
-	core.exportVariable('DOTNET_ROOT', installDir);
+	if (!process.env.DOTNET_ROOT?.includes(installDir)) {
+		core.exportVariable('DOTNET_ROOT', installDir);
+	}
 }
 
 function getToolCacheDirectory(): string {
