@@ -1,10 +1,10 @@
 import * as core from '@actions/core';
+import type { SdkIncludedVersions } from './versioning.types';
 import { fetchReleaseManifest } from './release-cache';
 
-export async function getSdkIncludedVersions(sdkVersion: string): Promise<{
-	runtime: string | null;
-	aspnetcore: string | null;
-}> {
+export async function getSdkIncludedVersions(
+	sdkVersion: string,
+): Promise<SdkIncludedVersions> {
 	try {
 		core.debug(`Getting SDK-included versions for SDK ${sdkVersion}`);
 

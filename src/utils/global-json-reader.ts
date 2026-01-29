@@ -2,19 +2,7 @@ import * as core from '@actions/core';
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import { parse as parseJson } from 'jsonc-parser';
-
-interface GlobalJson {
-	sdk?: {
-		version?: string;
-		rollForward?: string;
-		allowPrerelease?: boolean;
-	};
-}
-
-export interface SdkInfo {
-	version: string;
-	allowPrerelease: boolean;
-}
+import type { GlobalJson, SdkInfo } from './global-json.types';
 
 export async function readGlobalJson(
 	filePath: string,

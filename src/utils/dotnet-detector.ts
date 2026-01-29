@@ -1,12 +1,8 @@
 import * as core from '@actions/core';
 import * as exec from '@actions/exec';
-import type { DotnetType } from '../types';
+import type { DotnetType, VersionSet } from '../types';
 
-export interface InstalledVersions {
-	sdk: string[];
-	runtime: string[];
-	aspnetcore: string[];
-}
+export type InstalledVersions = VersionSet;
 
 // Parse output from `dotnet --list-sdks` or `dotnet --list-runtimes`
 // Expected format: 8.0.100 [/usr/share/dotnet/sdk]
