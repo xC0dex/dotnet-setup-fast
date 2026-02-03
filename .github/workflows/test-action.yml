@@ -214,6 +214,11 @@ jobs:
           dotnet --list-sdks
           dotnet --list-runtimes
 
+      - name: Install tools
+        run: |
+          dotnet tool install --global dotnet-ef
+          dotnet tool list --global
+
   test-global-json-override:
     name: Test global.json Override
     runs-on: ubuntu-latest
