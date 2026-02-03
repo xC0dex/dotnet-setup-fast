@@ -6,30 +6,46 @@ GitHub Action for .NET SDK/Runtime installation with caching. TypeScript + Vite 
 
 ## Architecture
 
+### Core Modules
 - [src/main.ts](../src/main.ts) - Entry point, orchestrates installer and global.json reading
 - [src/installer.ts](../src/installer.ts) - .NET download/installation via `@actions/tool-cache`
-- [src/types.ts](../src/types.ts) - Shared type definitions
-- [src/utils/global-json-reader.ts](../src/utils/global-json-reader.ts) - Reads and parses global.json for SDK version resolution
-- [src/utils/input-parser.ts](../src/utils/input-parser.ts) - Parses version inputs (comma-separated, multiline)
-- [src/utils/platform-utils.ts](../src/utils/platform-utils.ts) - Platform and architecture detection
-- [src/utils/archive-utils.ts](../src/utils/archive-utils.ts) - Archive extraction utilities
-- [src/utils/cache-utils.ts](../src/utils/cache-utils.ts) - Cache key generation and cache restore/save operations
+- [src/types.ts](../src/types.ts) - Core type definitions (DotnetType, VersionSet, ReleaseManifest)
+- [src/installer.types.ts](../src/installer.types.ts) - Installer-specific types (InstallResult, DownloadInfo)
+
+### Utilities
+- [src/utils/global-json-reader.ts](../src/utils/global-json-reader.ts) - Reads and parses global.json for SDK version resolution with rollForward support
+- [src/utils/global-json.types.ts](../src/utils/global-json.types.ts) - Type definitions for global.json structure
+- [src/utils/input-parser.ts](../src/utils/input-parser.ts) - Parses version inputs (comma-separated, multiline, YAML array)
+- [src/utils/platform-utils.ts](../src/utils/platform-utils.ts) - Platform and architecture detection for download URLs
+- [src/utils/dotnet-detector.ts](../src/utils/dotnet-detector.ts) - Detects installed .NET versions on the system
+- [src/utils/cache-utils.ts](../src/utils/cache-utils.ts) - Unified cache key generation and cache restore/save operations
+- [src/utils/cache.types.ts](../src/utils/cache.types.ts) - Type definitions for caching (VersionEntry)
+- [src/utils/output-formatter.ts](../src/utils/output-formatter.ts) - Formats and logs installation results for user output
+
+### Versioning
 - [src/utils/versioning/version-resolver.ts](../src/utils/versioning/version-resolver.ts) - Version wildcard resolution, keyword support (lts, sts, latest), and semver comparison
 - [src/utils/versioning/version-deduplicator.ts](../src/utils/versioning/version-deduplicator.ts) - Removes redundant SDK/Runtime installations using SDK/Runtime mapping
 - [src/utils/versioning/sdk-runtime-mapper.ts](../src/utils/versioning/sdk-runtime-mapper.ts) - Maps SDK versions to included runtimes to prevent duplicate installations
+- [src/utils/versioning/release-cache.ts](../src/utils/versioning/release-cache.ts) - Fetches and caches .NET release manifests
+- [src/utils/versioning/versioning.types.ts](../src/utils/versioning/versioning.types.ts) - Type definitions for version resolution (ReleaseInfo, ResolvedVersion)
+
+### Configuration
 - [action.yml](../action.yml) - GitHub Action inputs: `sdk-version`, `runtime-version`, `aspnetcore-version`, `global-json`, `cache`, `allow-preview`; outputs: `dotnet-version`, `dotnet-path`, `cache-hit`
 
-## Build System
+## Common Commands
 
 **Critical**: Vite bundles all deps into single `dist/index.js` for GitHub Actions.
 
 ```bash
 pnpm build    # TypeScript → Vite SSR bundle
-pnpm format   # Biome auto-fix
+pnpm format   # Biome & Prettier auto-fix
 pnpm lint     # Biome linting
+pnpm knip     # Dependency analysis with Knip
 pnpm test     # Run tests with Vitest
 pnpm validate # Runs all commands
 ```
+
+Always run `pnpm validate` in the end for a full check.
 
 ## Testing
 
@@ -58,6 +74,7 @@ describe('functionName', () => {
 
 - **Tabs** (not spaces), **single quotes**, LF line endings
 - **Variable names must always be written out in full** - no abbreviations (e.g., `versionNumber` not `versionNum`, `installationDirectory` not `instDir`, `platform` not `plat`)
+- **Type definitions**: Place related types in `<module>.types.ts` files alongside their modules (e.g., types used by `installer.ts` go in `installer.types.ts`, types for `global-json-reader.ts` go in `global-json.types.ts`)
 - Biome auto-organizes imports on save
 - Write clean, modular, maintainable code
 - **Never use `any` or `unknown`** - always provide explicit types
@@ -74,13 +91,6 @@ describe('functionName', () => {
 - Focus on values that help diagnose issues (inputs, outputs, decisions)
 - Prefer concise debug messages: `Resolved x.x.x -> 10.0.100` instead of multiple separate logs
 
-## Pull Request Guidelines
-
-**PR Titles** must follow the conventional commits format with prefixes like:
-
-- `feat: add support for ARM64 architecture`
-- `ci: update GitHub Actions workflow`
-
 ## Documentation Guidelines
 
 When writing documentation:
@@ -93,26 +103,3 @@ When writing documentation:
   - Use headings, bullet points, and code blocks for readability
   - Follow a logical flow: concept → explanation → example → expected behavior
   - Keep related information grouped together
-
-Example:
-
-```markdown
-## Cache Restoration
-
-The action attempts to restore cached .NET installations to speed up subsequent workflow runs.
-
-**How it works:**
-
-1. Generates a cache key based on platform, architecture, and installed versions
-2. Checks if a matching cache entry exists
-3. Restores files to the .NET installation directory if found
-
-**Example:**
-First run downloads .NET 8.0.0 (≈150 MB). Second run with same version restores from cache in seconds.
-```
-
-## Validation Workflow
-
-**Always validate changes before completion** by running the following command: `pnpm validate`.
-
-This ensures code quality and prevents breaking changes.
