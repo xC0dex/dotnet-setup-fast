@@ -7,12 +7,14 @@ GitHub Action for .NET SDK/Runtime installation with caching. TypeScript + Vite 
 ## Architecture
 
 ### Core Modules
+
 - [src/main.ts](../src/main.ts) - Entry point, orchestrates installer and global.json reading
 - [src/installer.ts](../src/installer.ts) - .NET download/installation via `@actions/tool-cache`
 - [src/types.ts](../src/types.ts) - Core type definitions (DotnetType, VersionSet, ReleaseManifest)
 - [src/installer.types.ts](../src/installer.types.ts) - Installer-specific types (InstallResult, DownloadInfo)
 
 ### Utilities
+
 - [src/utils/global-json-reader.ts](../src/utils/global-json-reader.ts) - Reads and parses global.json for SDK version resolution with rollForward support
 - [src/utils/global-json.types.ts](../src/utils/global-json.types.ts) - Type definitions for global.json structure
 - [src/utils/input-parser.ts](../src/utils/input-parser.ts) - Parses version inputs (comma-separated, multiline, YAML array)
@@ -23,6 +25,7 @@ GitHub Action for .NET SDK/Runtime installation with caching. TypeScript + Vite 
 - [src/utils/output-formatter.ts](../src/utils/output-formatter.ts) - Formats and logs installation results for user output
 
 ### Versioning
+
 - [src/utils/versioning/version-resolver.ts](../src/utils/versioning/version-resolver.ts) - Version wildcard resolution, keyword support (lts, sts, latest), and semver comparison
 - [src/utils/versioning/version-deduplicator.ts](../src/utils/versioning/version-deduplicator.ts) - Removes redundant SDK/Runtime installations using SDK/Runtime mapping
 - [src/utils/versioning/sdk-runtime-mapper.ts](../src/utils/versioning/sdk-runtime-mapper.ts) - Maps SDK versions to included runtimes to prevent duplicate installations
@@ -30,6 +33,7 @@ GitHub Action for .NET SDK/Runtime installation with caching. TypeScript + Vite 
 - [src/utils/versioning/versioning.types.ts](../src/utils/versioning/versioning.types.ts) - Type definitions for version resolution (ReleaseInfo, ResolvedVersion)
 
 ### Configuration
+
 - [action.yml](../action.yml) - GitHub Action inputs: `sdk-version`, `runtime-version`, `aspnetcore-version`, `global-json`, `cache`, `allow-preview`; outputs: `dotnet-version`, `dotnet-path`, `cache-hit`
 
 ## Common Commands
