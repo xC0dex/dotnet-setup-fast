@@ -212,7 +212,7 @@ function getSystemDotnetPath(): string {
 export function configureEnvironment(useToolCache: boolean): void {
 	const installDir = useToolCache
 		? getDotNetInstallDirectory()
-		: getSystemDotnetPath();
+		: getSystemDotnetPath(); // macOS requires DOTNET_ROOT to be set for dotnet tools to work properly. Thats why we point to the system installation here.
 
 	if (!process.env.PATH?.includes(installDir)) {
 		core.addPath(installDir);
