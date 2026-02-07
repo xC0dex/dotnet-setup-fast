@@ -2,8 +2,6 @@ import * as core from '@actions/core';
 import * as exec from '@actions/exec';
 import type { DotnetType, VersionSet } from '../types';
 
-export type InstalledVersions = VersionSet;
-
 // Parse output from `dotnet --list-sdks` or `dotnet --list-runtimes`
 // Expected format: 8.0.100 [/usr/share/dotnet/sdk]
 function parseVersionList(output: string): string[] {
@@ -133,7 +131,7 @@ async function getInstalledAspNetCoreRuntimes(
 
 export async function getInstalledVersions(
 	dotnetPath?: string,
-): Promise<InstalledVersions> {
+): Promise<VersionSet> {
 	try {
 		const [sdk, runtime, aspnetcore] = await Promise.all([
 			getInstalledSdks(dotnetPath),
@@ -153,7 +151,7 @@ export async function getInstalledVersions(
 export function isVersionInstalled(
 	version: string,
 	type: DotnetType,
-	installed: InstalledVersions,
+	installed: VersionSet,
 ): boolean {
 	if (type === 'sdk') {
 		return installed.sdk.includes(version);

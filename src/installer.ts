@@ -11,7 +11,7 @@ import type {
 	InstallResult,
 } from './installer.types';
 
-export type { DownloadInfo, InstallOptions, InstallResult };
+export type { InstallResult };
 import { getVersionCachePath } from './utils/cache-utils';
 import {
 	getInstalledVersions,

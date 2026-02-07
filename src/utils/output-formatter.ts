@@ -2,7 +2,7 @@ import * as core from '@actions/core';
 import type { DotnetType, VersionSet } from '../types';
 import type { InstallResult } from '../installer';
 
-export interface InstallationsBySource {
+interface InstallationsBySource {
 	alreadyInstalled: InstallResult[];
 	githubCache: InstallResult[];
 	downloaded: InstallResult[];
