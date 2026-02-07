@@ -4,12 +4,14 @@ import * as toolCache from '@actions/tool-cache';
 import * as crypto from 'node:crypto';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import type { DotnetType, FileInfo, Release } from './types';
 import type {
+	DotnetType,
 	DownloadInfo,
-	InstallOptions,
+	FileInfo,
 	InstallResult,
-} from './installer.types';
+	Release,
+	VersionEntry,
+} from './types';
 
 export type { InstallResult };
 import { getVersionCachePath } from './utils/cache-utils';
@@ -299,7 +301,7 @@ async function isVersionInstalledInDirectory(
 }
 
 export async function installVersion(
-	options: InstallOptions,
+	options: VersionEntry,
 ): Promise<InstallResult> {
 	const { version, type } = options;
 	const prefix = `[${type.toUpperCase()}]`;
