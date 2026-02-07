@@ -39,12 +39,6 @@ export type InstallSource =
 	| 'github-cache'
 	| 'download';
 
-// From installer.types.ts
-export interface InstallOptions {
-	version: string;
-	type: DotnetType;
-}
-
 export interface InstallResult {
 	version: string;
 	type: DotnetType;
@@ -57,7 +51,6 @@ export interface DownloadInfo {
 	hash: string;
 }
 
-// From utils/global-json.types.ts
 export interface GlobalJson {
 	sdk?: {
 		version?: string;
@@ -71,13 +64,11 @@ export interface SdkInfo {
 	allowPrerelease: boolean;
 }
 
-// From utils/cache.types.ts
 export interface VersionEntry {
 	version: string;
 	type: DotnetType;
 }
 
-// From utils/versioning/versioning.types.ts
 export interface ReleaseInfo {
 	'channel-version': string;
 	'latest-sdk': string;

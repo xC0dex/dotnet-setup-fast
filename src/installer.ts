@@ -8,9 +8,9 @@ import type {
 	DotnetType,
 	DownloadInfo,
 	FileInfo,
-	InstallOptions,
 	InstallResult,
 	Release,
+	VersionEntry,
 } from './types';
 
 export type { InstallResult };
@@ -301,7 +301,7 @@ async function isVersionInstalledInDirectory(
 }
 
 export async function installVersion(
-	options: InstallOptions,
+	options: VersionEntry,
 ): Promise<InstallResult> {
 	const { version, type } = options;
 	const prefix = `[${type.toUpperCase()}]`;
