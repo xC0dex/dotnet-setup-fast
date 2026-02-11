@@ -331,3 +331,23 @@ jobs:
         run: |
           dotnet --list-sdks
           dotnet --list-runtimes
+
+  test-latest-preview:
+    name: Test Preview Versions
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+
+      - name: Setup .NET with preview versions
+        uses: ./
+        id: setup-dotnet
+        with:
+          sdk-version: 'latest'
+          allow-prerelease: true
+          cache: false
+
+      - name: Verify installation
+        run: |
+          dotnet --list-sdks
+          dotnet --list-runtimes
